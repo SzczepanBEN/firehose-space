@@ -43,20 +43,20 @@ interface Post {
   hotness: number;
 }
 
-// JWT utilities
-const secret = new TextEncoder().encode(process.env.JWT_SECRET || 'default-secret-change-me');
+// JWT utilities - secret will be set from env in fetch handler
+let jwtSecretKey: Uint8Array;
 
 async function createJWT(payload: any): Promise<string> {
   return await new EncryptJWT(payload)
     .setProtectedHeader({ alg: 'dir', enc: 'A256GCM' })
     .setIssuedAt()
     .setExpirationTime('7d')
-    .encrypt(secret);
+    .encrypt(jwtSecretKey);
 }
 
 async function verifyJWT(token: string): Promise<any> {
   try {
-    const { payload } = await jwtDecrypt(token, secret);
+    const { payload } = await jwtDecrypt(token, jwtSecretKey);
     return payload;
   } catch {
     return null;
@@ -1256,6 +1256,9 @@ async function handleUpdateLeaderboard(request: Request, env: Env): Promise<Resp
 // Main Worker handler
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
+    // Initialize JWT secret from environment
+    jwtSecretKey = new TextEncoder().encode(env.JWT_SECRET || 'default-secret-change-me');
+    
     const url = new URL(request.url);
     const method = request.method;
     const path = url.pathname;

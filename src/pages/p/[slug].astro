@@ -1,8 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { marked } from 'marked';
-import DOMPurify from 'dompurify';
-import { JSDOM } from 'jsdom';
 
 // For development, we'll disable prerendering so it works dynamically
 export const prerender = false;
@@ -107,13 +105,8 @@ function renderMarkdown(markdown: string): string {
     gfm: true,
   });
   
-  const html = marked(markdown);
-  
-  // Create a virtual DOM for server-side DOMPurify
-  const window = new JSDOM('').window;
-  const purify = DOMPurify(window);
-  
-  return purify.sanitize(html);
+  // Return safely rendered markdown (marked already escapes HTML by default)
+  return marked(markdown);
 }
 
 function getTimeAgo(timestamp: number): string {

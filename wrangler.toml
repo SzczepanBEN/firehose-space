@@ -1,6 +1,18 @@
 name = "firehose-space"
+main = "src/worker.ts"
 compatibility_date = "2024-01-01"
 compatibility_flags = ["nodejs_compat"]
+
+# Main D1 database binding
+[[d1_databases]]
+binding = "DB"
+database_name = "firehose-db"
+database_id = "24fc6bed-8bc6-4b72-be83-0f7d246a6174"
+
+# Main KV namespace binding
+[[kv_namespaces]]
+binding = "CACHE"
+id = "112f09795aa74b2081f17a65346cc0d1"
 
 [env.production]
 name = "firehose-space"
@@ -13,11 +25,11 @@ SITE_URL = "https://firehose.space"
 [[env.production.d1_databases]]
 binding = "DB"
 database_name = "firehose-db"
-database_id = "your-database-id-here"
+database_id = "24fc6bed-8bc6-4b72-be83-0f7d246a6174"
 
 [[env.production.kv_namespaces]]
 binding = "CACHE"
-id = "your-kv-namespace-id-here"
+id = "112f09795aa74b2081f17a65346cc0d1"
 
 [env.development]
 name = "firehose-space-dev"
@@ -28,13 +40,13 @@ SITE_URL = "http://localhost:3000"
 
 [[env.development.d1_databases]]
 binding = "DB"
-database_name = "firehose-db-dev"
-database_id = "your-dev-database-id-here"
+database_name = "firehose-db"
+database_id = "24fc6bed-8bc6-4b72-be83-0f7d246a6174"
 
 [[env.development.kv_namespaces]]
 binding = "CACHE"
-id = "your-dev-kv-namespace-id-here"
+id = "112f09795aa74b2081f17a65346cc0d1"
 
-# Cron triggers for calculating hotness and leaderboards
-[[triggers.crons]]
-crons = ["0 */1 * * *"]  # Every hour
+# Cron triggers disabled temporarily for initial deployment
+# [[triggers.crons]]
+# crons = ["0 */1 * * *"]  # Every hour
