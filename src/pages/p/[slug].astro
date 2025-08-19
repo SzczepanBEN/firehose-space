@@ -1,0 +1,522 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { marked } from 'marked';
+import DOMPurify from 'dompurify';
+import { JSDOM } from 'jsdom';
+
+// For development, we'll disable prerendering so it works dynamically
+export const prerender = false;
+
+const { slug } = Astro.params;
+
+// Mock data - this will be replaced with actual API calls
+const mockPost = {
+  id: '1',
+  type: 'self',
+  title: 'My Journey Building a SaaS: Lessons Learned',
+  url: null,
+  slug: 'my-journey-building-a-saas-lessons-learned-post4',
+  domain: null,
+  author: {
+    id: 'user1',
+    display_name: 'John Doe',
+    avatar_url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
+    bio: 'Full-stack developer passionate about web technologies'
+  },
+  score: 67,
+  comments_count: 23,
+  clicks: 142,
+  created_at: Date.now() - 1800000, // 30 minutes ago
+  hotness: 0.92,
+  body_markdown: `# My Journey Building a SaaS: Lessons Learned
+
+Over the past two years, I've been working on building a SaaS product from the ground up. Here are the key lessons I've learned along the way:
+
+## 1. Start with the Problem, Not the Solution
+
+The biggest mistake I made early on was falling in love with a technical solution before properly understanding the problem. I spent months building features that nobody actually wanted.
+
+**Key takeaway:** Talk to potential customers extensively before writing a single line of code.
+
+## 2. MVP is Truly Minimal
+
+My first "MVP" had way too many features. It took me 6 months to build what should have been a 2-week project.
+
+- Focus on one core workflow
+- Cut everything that's not absolutely essential
+- You can always add features later
+
+## 3. Infrastructure Matters
+
+I initially chose a complex microservices architecture because it seemed "more scalable." This was a mistake for an early-stage product.
+
+**What worked better:**
+- Monolithic architecture initially
+- Cloudflare stack for simplicity
+- Focus on product-market fit first, optimize later
+
+## 4. Customer Feedback is Gold
+
+The features customers actually use vs. what they say they want are often completely different.
+
+## Conclusion
+
+Building a SaaS is hard, but incredibly rewarding. The key is to stay focused on solving real problems for real people.`
+};
+
+const mockComments = [
+  {
+    id: 'comment1',
+    user: {
+      display_name: 'Jane Smith',
+      avatar_url: 'https://images.unsplash.com/photo-1494790108755-2616b612b37c?w=150'
+    },
+    body: 'This resonates with me so much. I made the exact same MVP mistake on my first project. Started with 15 features when I should have launched with 3.',
+    score: 12,
+    created_at: Date.now() - 900000, // 15 minutes ago
+  },
+  {
+    id: 'comment2',
+    user: {
+      display_name: 'Alex Chen',
+      avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150'
+    },
+    body: 'What tools did you use for customer feedback collection? I\'m struggling with getting quality feedback from potential users.',
+    score: 8,
+    created_at: Date.now() - 600000, // 10 minutes ago
+  },
+  {
+    id: 'comment3',
+    user: {
+      display_name: 'John Doe',
+      avatar_url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150'
+    },
+    body: '@alex I used a combination of Intercom for in-app feedback and regular customer calls. Nothing beats direct conversation! Happy to share more details if you\'re interested.',
+    score: 5,
+    created_at: Date.now() - 300000, // 5 minutes ago
+  }
+];
+
+// Render markdown safely
+function renderMarkdown(markdown: string): string {
+  if (!markdown) return '';
+  
+  // Configure marked for safe rendering
+  marked.setOptions({
+    breaks: true,
+    gfm: true,
+  });
+  
+  const html = marked(markdown);
+  
+  // Create a virtual DOM for server-side DOMPurify
+  const window = new JSDOM('').window;
+  const purify = DOMPurify(window);
+  
+  return purify.sanitize(html);
+}
+
+function getTimeAgo(timestamp: number): string {
+  const now = Date.now();
+  const diff = now - timestamp;
+  const minutes = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days = Math.floor(diff / 86400000);
+
+  if (days > 0) return `${days}d ago`;
+  if (hours > 0) return `${hours}h ago`;
+  if (minutes > 0) return `${minutes}m ago`;
+  return 'just now';
+}
+
+// Check if post exists
+if (!mockPost || mockPost.slug !== slug) {
+  return new Response(null, {
+    status: 404,
+    statusText: 'Not found'
+  });
+}
+
+const postHtml = mockPost.body_markdown ? renderMarkdown(mockPost.body_markdown) : '';
+const canonicalUrl = `https://firehose.space/p/${slug}`;
+const ogImage = `https://firehose.space/api/og/post/${mockPost.id}`;
+
+// SEO structured data
+const structuredData = {
+  "@context": "https://schema.org",
+  "@type": mockPost.type === 'link' ? "Article" : "DiscussionForumPosting",
+  "headline": mockPost.title,
+  "author": {
+    "@type": "Person",
+    "name": mockPost.author.display_name,
+    "url": `https://firehose.space/u/${mockPost.author.id}`
+  },
+  "datePublished": new Date(mockPost.created_at).toISOString(),
+  "url": canonicalUrl,
+  "mainEntityOfPage": canonicalUrl,
+  "interactionStatistic": [
+    {
+      "@type": "InteractionCounter",
+      "interactionType": "https://schema.org/LikeAction",
+      "userInteractionCount": mockPost.score
+    },
+    {
+      "@type": "InteractionCounter", 
+      "interactionType": "https://schema.org/CommentAction",
+      "userInteractionCount": mockPost.comments_count
+    }
+  ]
+};
+
+if (mockPost.type === 'link' && mockPost.url) {
+  structuredData["url"] = mockPost.url;
+}
+---
+
+<BaseLayout 
+  title={mockPost.title}
+  description={`${mockPost.author.display_name} shared: ${mockPost.title}`}
+  canonicalUrl={canonicalUrl}
+  ogImage={ogImage}
+>
+  
+  <!-- Structured Data -->
+  <script type="application/ld+json" set:html={JSON.stringify(structuredData)} />
+
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    
+    <!-- Post Header -->
+    <article class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+      
+      <!-- Post Meta -->
+      <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+        <div class="flex items-start space-x-4">
+          
+          <!-- Vote Column -->
+          <div class="flex flex-col items-center space-y-2 flex-shrink-0">
+            <button 
+              class="text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
+              data-vote="up"
+              data-post-id={mockPost.id}
+            >
+              <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"></path>
+              </svg>
+            </button>
+            
+            <span class="text-lg font-bold text-gray-700 dark:text-gray-300">
+              {mockPost.score}
+            </span>
+            
+            <button 
+              class="text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+              data-vote="down"
+              data-post-id={mockPost.id}
+            >
+              <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Post Content -->
+          <div class="flex-1 min-w-0">
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-3">
+              {mockPost.title}
+            </h1>
+
+            {/* External link indicator */}
+            {mockPost.type === 'link' && mockPost.url && (
+              <div class="mb-4">
+                <a 
+                  href={mockPost.url} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  class="inline-flex items-center space-x-2 text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-500 text-sm font-medium"
+                  onclick={`fetch('/api/posts/${mockPost.id}/click', {method: 'POST'})`}
+                >
+                  <span>{mockPost.domain}</span>
+                  <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                  </svg>
+                </a>
+              </div>
+            )}
+
+            {/* Post type indicator */}
+            {mockPost.type === 'self' && (
+              <div class="mb-4">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                  Self Post
+                </span>
+              </div>
+            )}
+
+            <!-- Author and Meta Info -->
+            <div class="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
+              <div class="flex items-center space-x-2">
+                <img 
+                  src={mockPost.author.avatar_url || '/default-avatar.svg'} 
+                  alt={mockPost.author.display_name}
+                  class="w-8 h-8 rounded-full"
+                >
+                <div class="flex flex-col">
+                  <a 
+                    href={`/u/${mockPost.author.id}`}
+                    class="font-medium text-gray-900 dark:text-white hover:text-orange-600 dark:hover:text-orange-400"
+                  >
+                    {mockPost.author.display_name}
+                  </a>
+                  {mockPost.author.bio && (
+                    <span class="text-xs text-gray-500 dark:text-gray-400">
+                      {mockPost.author.bio}
+                    </span>
+                  )}
+                </div>
+              </div>
+              
+              <span>•</span>
+              <time dateTime={new Date(mockPost.created_at).toISOString()}>
+                {getTimeAgo(mockPost.created_at)}
+              </time>
+              
+              <span>•</span>
+              <span>{mockPost.clicks} clicks</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Post Body (for self posts) -->
+      {mockPost.type === 'self' && postHtml && (
+        <div class="p-6">
+          <div 
+            class="prose prose-gray dark:prose-invert max-w-none"
+            set:html={postHtml}
+          />
+        </div>
+      )}
+    </article>
+
+    <!-- Comments Section -->
+    <section class="mt-8">
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+        
+        <!-- Comments Header -->
+        <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+          <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4" id="comments">
+            Comments ({mockPost.comments_count})
+          </h2>
+
+          <!-- Comment Form -->
+          <form id="comment-form" class="space-y-4">
+            <div>
+              <label for="comment-body" class="sr-only">Write a comment</label>
+              <textarea 
+                id="comment-body"
+                name="body"
+                rows="4"
+                class="block w-full border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-orange-500 focus:border-orange-500 dark:bg-gray-700 dark:text-white"
+                placeholder="Share your thoughts... (Supports Markdown)"
+                required
+              ></textarea>
+            </div>
+            
+            <div class="flex items-center justify-between">
+              <p class="text-sm text-gray-500 dark:text-gray-400">
+                Supports Markdown formatting
+              </p>
+              
+              <button 
+                type="submit"
+                class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+              >
+                Post Comment
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Comments List -->
+        <div class="divide-y divide-gray-200 dark:divide-gray-700">
+          {mockComments.map((comment) => (
+            <div class="p-6">
+              <div class="flex space-x-3">
+                
+                <!-- Comment Voting -->
+                <div class="flex flex-col items-center space-y-1 flex-shrink-0">
+                  <button 
+                    class="text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
+                    data-vote="up"
+                    data-comment-id={comment.id}
+                  >
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"></path>
+                    </svg>
+                  </button>
+                  
+                  <span class="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    {comment.score}
+                  </span>
+                  
+                  <button 
+                    class="text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                    data-vote="down" 
+                    data-comment-id={comment.id}
+                  >
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                    </svg>
+                  </button>
+                </div>
+
+                <!-- Comment Content -->
+                <div class="flex-1 min-w-0">
+                  
+                  <!-- Comment Header -->
+                  <div class="flex items-center space-x-2 mb-2">
+                    <img 
+                      src={comment.user.avatar_url || '/default-avatar.svg'} 
+                      alt={comment.user.display_name}
+                      class="w-6 h-6 rounded-full"
+                    >
+                    <span class="font-medium text-gray-900 dark:text-white">
+                      {comment.user.display_name}
+                    </span>
+                    <span class="text-gray-500 dark:text-gray-400 text-sm">
+                      {getTimeAgo(comment.created_at)}
+                    </span>
+                  </div>
+
+                  <!-- Comment Body -->
+                  <div class="text-gray-900 dark:text-gray-100 whitespace-pre-wrap">
+                    {comment.body}
+                  </div>
+
+                  <!-- Comment Actions -->
+                  <div class="mt-2 flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
+                    <button class="hover:text-orange-600 dark:hover:text-orange-400 transition-colors">
+                      Reply
+                    </button>
+                    <button class="hover:text-red-600 dark:hover:text-red-400 transition-colors">
+                      Report
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <!-- Load More Comments -->
+        {mockComments.length >= 10 && (
+          <div class="p-6 border-t border-gray-200 dark:border-gray-700">
+            <button class="text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-500 text-sm font-medium">
+              Load more comments
+            </button>
+          </div>
+        )}
+      </div>
+    </section>
+
+    <!-- Share and Actions -->
+    <div class="mt-6 flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
+      <div class="flex items-center space-x-4">
+        <button class="hover:text-orange-600 dark:hover:text-orange-400 transition-colors">
+          Share
+        </button>
+        <button class="hover:text-orange-600 dark:hover:text-orange-400 transition-colors">
+          Save
+        </button>
+        <button class="hover:text-red-600 dark:hover:text-red-400 transition-colors">
+          Report
+        </button>
+      </div>
+      
+      <div>
+        <span>Post ID: {mockPost.id}</span>
+      </div>
+    </div>
+  </div>
+</BaseLayout>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // Handle voting
+    const voteButtons = document.querySelectorAll('button[data-vote]');
+    voteButtons.forEach(button => {
+      button.addEventListener('click', async (e) => {
+        e.preventDefault();
+        
+        const voteType = button.dataset.vote;
+        const postId = button.dataset.postId;
+        const commentId = button.dataset.commentId;
+        
+        const entityType = postId ? 'post' : 'comment';
+        const entityId = postId || commentId;
+        
+        try {
+          const response = await fetch(`/api/${entityType}s/${entityId}/vote`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${localStorage.getItem('auth_token') || ''}`
+            },
+            body: JSON.stringify({ vote_type: voteType })
+          });
+
+          if (response.ok) {
+            const result = await response.json();
+            // Update score display
+            const scoreElement = button.parentElement.querySelector('span');
+            if (scoreElement) {
+              scoreElement.textContent = result.new_score;
+            }
+          } else if (response.status === 401) {
+            // Redirect to login
+            window.location.href = '/login';
+          }
+        } catch (error) {
+          console.error('Vote error:', error);
+        }
+      });
+    });
+
+    // Handle comment submission
+    const commentForm = document.getElementById('comment-form');
+    const commentBody = document.getElementById('comment-body');
+    
+    commentForm?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const body = commentBody.value.trim();
+      if (!body) return;
+
+      try {
+        const postId = window.location.pathname.split('/').pop()?.split('-').pop();
+        
+        const response = await fetch(`/api/posts/${postId}/comments`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('auth_token') || ''}`
+          },
+          body: JSON.stringify({ body })
+        });
+
+        if (response.ok) {
+          // Reload page to show new comment
+          window.location.reload();
+        } else if (response.status === 401) {
+          window.location.href = '/login';
+        } else {
+          const result = await response.json();
+          alert(result.error || 'Failed to post comment');
+        }
+      } catch (error) {
+        console.error('Comment error:', error);
+        alert('Failed to post comment');
+      }
+    });
+  });
+</script>

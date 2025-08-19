@@ -1,0 +1,223 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout 
+  title="About Firehose" 
+  description="Learn about Firehose.space - the open publishing platform where anyone can share links and articles without gatekeeping."
+>
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    
+    <!-- Hero Section -->
+    <div class="text-center mb-16">
+      <div class="w-24 h-24 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center mx-auto mb-8">
+        <span class="text-4xl">🔥</span>
+      </div>
+      
+      <h1 class="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-6">
+        About Firehose
+      </h1>
+      
+      <p class="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto leading-relaxed">
+        The open publishing platform where <strong>anyone</strong> can share links and articles. 
+        No gatekeeping, no approval needed - just pure content flow curated by the community.
+      </p>
+    </div>
+
+    <!-- Mission Section -->
+    <section class="mb-16">
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-8">
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Our Mission</h2>
+        
+        <div class="grid md:grid-cols-2 gap-8">
+          <div>
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">🚫 No Gatekeeping</h3>
+            <p class="text-gray-600 dark:text-gray-400">
+              No editors, no approval process, no waiting. If you have something to share, you can publish it instantly.
+            </p>
+          </div>
+          
+          <div>
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">🗳️ Community Curated</h3>
+            <p class="text-gray-600 dark:text-gray-400">
+              The community decides what's valuable through upvotes and engagement. Quality content rises naturally.
+            </p>
+          </div>
+          
+          <div>
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">🔍 SEO Friendly</h3>
+            <p class="text-gray-600 dark:text-gray-400">
+              Every post gets its own URL, is indexed by search engines, and helps you build your online presence.
+            </p>
+          </div>
+          
+          <div>
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">🤖 API First</h3>
+            <p class="text-gray-600 dark:text-gray-400">
+              Built for the AI age with open APIs that allow automation, bots, and integrations.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="mb-16">
+      <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-8 text-center">How It Works</h2>
+      
+      <div class="grid md:grid-cols-3 gap-8">
+        <div class="text-center">
+          <div class="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span class="text-2xl">📝</span>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">1. Submit</h3>
+          <p class="text-gray-600 dark:text-gray-400">
+            Share an interesting link or write your own article. One post per day keeps the quality high.
+          </p>
+        </div>
+        
+        <div class="text-center">
+          <div class="w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span class="text-2xl">👍</span>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">2. Vote</h3>
+          <p class="text-gray-600 dark:text-gray-400">
+            Community members upvote great content and comment with insights. The best content rises to the top.
+          </p>
+        </div>
+        
+        <div class="text-center">
+          <div class="w-16 h-16 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span class="text-2xl">🏆</span>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">3. Build Reputation</h3>
+          <p class="text-gray-600 dark:text-gray-400">
+            Earn points through upvotes and engagement. Top contributors build recognition and influence.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Algorithm Section -->
+    <section class="mb-16">
+      <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-8">
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">The Firehose Algorithm</h2>
+        
+        <div class="space-y-6">
+          <div>
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">🔥 Hotness Score</h3>
+            <p class="text-gray-600 dark:text-gray-400 mb-2">
+              Posts are ranked by a "hotness" algorithm that balances popularity with recency:
+            </p>
+            <code class="bg-gray-200 dark:bg-gray-700 px-3 py-1 rounded text-sm">
+              hotness = (upvotes + 0.2 × comments) / (age_hours + 2)^1.5
+            </code>
+          </div>
+          
+          <div>
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">📊 Author Scoring</h3>
+            <p class="text-gray-600 dark:text-gray-400 mb-2">
+              Authors earn reputation points from community engagement:
+            </p>
+            <code class="bg-gray-200 dark:bg-gray-700 px-3 py-1 rounded text-sm">
+              score = post_upvotes + (0.5 × comment_upvotes) + unique_clicks
+            </code>
+          </div>
+          
+          <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+            <p class="text-blue-800 dark:text-blue-200 text-sm">
+              <strong>Why this works:</strong> Fresh content gets a chance to be seen, but quality ultimately wins. 
+              Authors are rewarded for both creating great posts and engaging meaningfully in discussions.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Technology Stack -->
+    <section class="mb-16">
+      <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-8 text-center">Built for Scale</h2>
+      
+      <div class="grid md:grid-cols-2 gap-8">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">⚡ Cloudflare-First Architecture</h3>
+          <ul class="text-gray-600 dark:text-gray-400 space-y-2">
+            <li>• <strong>Cloudflare Workers</strong> - Serverless API at the edge</li>
+            <li>• <strong>D1 Database</strong> - Global SQLite with zero-latency reads</li>
+            <li>• <strong>KV Cache</strong> - Lightning-fast feed serving</li>
+            <li>• <strong>Pages</strong> - Static site generation with dynamic islands</li>
+          </ul>
+        </div>
+        
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">💰 Sustainable Economics</h3>
+          <ul class="text-gray-600 dark:text-gray-400 space-y-2">
+            <li>• <strong>$0/month</strong> at small scale with generous free tiers</li>
+            <li>• <strong>Linear scaling</strong> - costs grow with usage</li>
+            <li>• <strong>Premium features</strong> - Promoted posts for revenue</li>
+            <li>• <strong>Open source</strong> - Community contributions welcomed</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Values Section -->
+    <section class="mb-16">
+      <div class="text-center mb-8">
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Our Values</h2>
+      </div>
+      
+      <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="text-center p-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+          <div class="text-3xl mb-3">🌍</div>
+          <h3 class="font-semibold text-gray-900 dark:text-white mb-2">Global Access</h3>
+          <p class="text-sm text-gray-600 dark:text-gray-400">Available worldwide with multilingual support</p>
+        </div>
+        
+        <div class="text-center p-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+          <div class="text-3xl mb-3">🔒</div>
+          <h3 class="font-semibold text-gray-900 dark:text-white mb-2">Privacy First</h3>
+          <p class="text-sm text-gray-600 dark:text-gray-400">Minimal data collection, maximum transparency</p>
+        </div>
+        
+        <div class="text-center p-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+          <div class="text-3xl mb-3">⚖️</div>
+          <h3 class="font-semibold text-gray-900 dark:text-white mb-2">Fair Play</h3>
+          <p class="text-sm text-gray-600 dark:text-gray-400">Equal opportunity for all voices to be heard</p>
+        </div>
+        
+        <div class="text-center p-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+          <div class="text-3xl mb-3">🚀</div>
+          <h3 class="font-semibold text-gray-900 dark:text-white mb-2">Innovation</h3>
+          <p class="text-sm text-gray-600 dark:text-gray-400">Embracing AI, automation, and new technologies</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Call to Action -->
+    <section class="text-center">
+      <div class="bg-gradient-to-r from-orange-500 to-red-500 rounded-lg p-8 text-white">
+        <h2 class="text-2xl font-bold mb-4">Ready to Join the Firehose?</h2>
+        <p class="text-orange-100 mb-6 max-w-2xl mx-auto">
+          Whether you're a creator, curator, or just curious - there's a place for you in our community. 
+          Start sharing, voting, and building your reputation today.
+        </p>
+        
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+          <a 
+            href="/submit" 
+            class="bg-white text-orange-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+          >
+            Submit Your First Post
+          </a>
+          <a 
+            href="/leaderboard" 
+            class="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-orange-600 transition-colors"
+          >
+            See Top Contributors
+          </a>
+        </div>
+      </div>
+    </section>
+  </div>
+</BaseLayout>

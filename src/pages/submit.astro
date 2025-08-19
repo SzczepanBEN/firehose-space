@@ -1,0 +1,350 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+// Redirect to login if not authenticated (will be handled client-side)
+---
+
+<BaseLayout title="Submit Post" description="Share a link or write an article on Firehose.space">
+  <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    
+    <!-- Header -->
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+        Submit a Post
+      </h1>
+      <p class="text-gray-600 dark:text-gray-400">
+        Share a link or write your own article. No approval needed - your post goes live immediately.
+      </p>
+    </div>
+
+    <!-- Guidelines -->
+    <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-8">
+      <h3 class="text-sm font-semibold text-blue-900 dark:text-blue-200 mb-2">Quick Guidelines:</h3>
+      <ul class="text-sm text-blue-800 dark:text-blue-300 space-y-1">
+        <li>• One post per user per day</li>
+        <li>• Duplicate links are automatically detected</li>
+        <li>• No illegal content, spam, or personal information</li>
+        <li>• Self-posts support Markdown formatting</li>
+      </ul>
+    </div>
+
+    <!-- Not Authenticated State -->
+    <div id="not-authenticated" class="hidden">
+      <div class="text-center py-12">
+        <div class="mx-auto h-12 w-12 bg-orange-500 rounded-full flex items-center justify-center mb-6">
+          <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path>
+          </svg>
+        </div>
+        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">Authentication Required</h3>
+        <p class="text-gray-500 dark:text-gray-400 mb-6">You need to be logged in to submit posts.</p>
+        <a 
+          href="/login" 
+          class="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+        >
+          Login to Submit
+        </a>
+      </div>
+    </div>
+
+    <!-- Submission Form -->
+    <form id="submit-form" class="space-y-6 hidden">
+      
+      <!-- Post Type Selector -->
+      <div>
+        <label class="text-base font-medium text-gray-900 dark:text-white">Post Type</label>
+        <p class="text-sm text-gray-500 dark:text-gray-400">Choose whether to share a link or write your own article</p>
+        <fieldset class="mt-4">
+          <div class="space-y-4">
+            <div class="flex items-center">
+              <input 
+                id="type-link" 
+                name="post-type" 
+                type="radio" 
+                value="link" 
+                checked 
+                class="focus:ring-orange-500 h-4 w-4 text-orange-600 border-gray-300 dark:border-gray-600"
+              >
+              <label for="type-link" class="ml-3 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <span class="font-semibold">Link Post</span> - Share an interesting link from around the web
+              </label>
+            </div>
+            <div class="flex items-center">
+              <input 
+                id="type-self" 
+                name="post-type" 
+                type="radio" 
+                value="self"
+                class="focus:ring-orange-500 h-4 w-4 text-orange-600 border-gray-300 dark:border-gray-600"
+              >
+              <label for="type-self" class="ml-3 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <span class="font-semibold">Self Post</span> - Write your own article or text content
+              </label>
+            </div>
+          </div>
+        </fieldset>
+      </div>
+
+      <!-- Title -->
+      <div>
+        <label for="title" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          Title *
+        </label>
+        <input 
+          type="text" 
+          id="title" 
+          name="title" 
+          required 
+          maxlength="200"
+          class="block w-full border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-orange-500 focus:border-orange-500 dark:bg-gray-800 dark:text-white"
+          placeholder="What's this about? Make it descriptive and engaging..."
+        >
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          <span id="title-count">0</span>/200 characters
+        </p>
+      </div>
+
+      <!-- URL Field (for link posts) -->
+      <div id="url-field">
+        <label for="url" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          URL *
+        </label>
+        <input 
+          type="url" 
+          id="url" 
+          name="url" 
+          class="block w-full border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-orange-500 focus:border-orange-500 dark:bg-gray-800 dark:text-white"
+          placeholder="https://example.com/article"
+        >
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          The link you want to share. We'll automatically extract the domain and check for duplicates.
+        </p>
+      </div>
+
+      <!-- Content Field (for self posts) -->
+      <div id="content-field" class="hidden">
+        <label for="content" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          Content *
+        </label>
+        <textarea 
+          id="content" 
+          name="content" 
+          rows="15"
+          class="block w-full border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-orange-500 focus:border-orange-500 dark:bg-gray-800 dark:text-white font-mono text-sm"
+          placeholder="Write your article here. Supports Markdown formatting:
+
+# Headings
+**bold text**
+*italic text*
+[link text](url)
+- bullet points
+1. numbered lists
+
+Code blocks:
+```
+your code here
+```"
+        ></textarea>
+        <div class="mt-2 flex justify-between text-sm text-gray-500 dark:text-gray-400">
+          <span>Supports Markdown formatting</span>
+          <span id="content-count">0</span>/10,000 characters</span>
+        </div>
+      </div>
+
+      <!-- Optional Image URL -->
+      <div>
+        <label for="image-url" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          Image URL (optional)
+        </label>
+        <input 
+          type="url" 
+          id="image-url" 
+          name="image-url" 
+          class="block w-full border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-orange-500 focus:border-orange-500 dark:bg-gray-800 dark:text-white"
+          placeholder="https://example.com/image.jpg"
+        >
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          Optional thumbnail image. For link posts, we'll try to auto-detect from the page.
+        </p>
+      </div>
+
+      <!-- Rate Limiting Notice -->
+      <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+        <div class="flex">
+          <div class="flex-shrink-0">
+            <svg class="h-5 w-5 text-amber-400" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+            </svg>
+          </div>
+          <div class="ml-3">
+            <h3 class="text-sm font-medium text-amber-800 dark:text-amber-200">
+              Rate Limiting
+            </h3>
+            <div class="mt-1 text-sm text-amber-700 dark:text-amber-300">
+              <p>You can submit one post per day. Make it count!</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Submit Button -->
+      <div class="flex items-center justify-between pt-6">
+        <button 
+          type="button" 
+          onclick="history.back()"
+          class="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 px-6 py-2 rounded-lg font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+        >
+          Cancel
+        </button>
+        
+        <button 
+          type="submit" 
+          id="submit-btn"
+          class="bg-orange-600 hover:bg-orange-700 disabled:bg-gray-400 text-white px-8 py-2 rounded-lg font-medium transition-colors"
+        >
+          Submit Post
+        </button>
+      </div>
+    </form>
+
+    <!-- Success/Error Messages -->
+    <div id="message-container" class="mt-6 hidden"></div>
+  </div>
+</BaseLayout>
+
+<style>
+  /* Custom markdown preview styles */
+  .markdown-preview {
+    @apply prose prose-sm dark:prose-invert max-w-none;
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', async () => {
+    // Check authentication first
+    const isAuthenticated = await checkAuth();
+    
+    const form = document.getElementById('submit-form');
+    const notAuthenticatedDiv = document.getElementById('not-authenticated');
+    
+    if (!isAuthenticated) {
+      notAuthenticatedDiv.classList.remove('hidden');
+      return;
+    }
+    
+    // Show form if authenticated
+    form.classList.remove('hidden');
+    
+    const typeRadios = document.querySelectorAll('input[name="post-type"]');
+    const urlField = document.getElementById('url-field');
+    const contentField = document.getElementById('content-field');
+    const titleInput = document.getElementById('title');
+    const contentInput = document.getElementById('content');
+    const submitBtn = document.getElementById('submit-btn');
+    const messageContainer = document.getElementById('message-container');
+
+    // Handle post type switching
+    typeRadios.forEach(radio => {
+      radio.addEventListener('change', (e) => {
+        const isLinkPost = e.target.value === 'link';
+        
+        if (isLinkPost) {
+          urlField.classList.remove('hidden');
+          contentField.classList.add('hidden');
+          document.getElementById('url').required = true;
+          document.getElementById('content').required = false;
+        } else {
+          urlField.classList.add('hidden');
+          contentField.classList.remove('hidden');
+          document.getElementById('url').required = false;
+          document.getElementById('content').required = true;
+        }
+      });
+    });
+
+    // Character counters
+    titleInput.addEventListener('input', () => {
+      const count = titleInput.value.length;
+      document.getElementById('title-count').textContent = count;
+    });
+
+    contentInput.addEventListener('input', () => {
+      const count = contentInput.value.length;
+      document.getElementById('content-count').textContent = count;
+    });
+
+    // Form submission
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Submitting...';
+      
+      try {
+        const formData = new FormData(form);
+        const postType = formData.get('post-type');
+        
+        const submitData = {
+          type: postType,
+          title: formData.get('title'),
+          url: postType === 'link' ? formData.get('url') : null,
+          content: postType === 'self' ? formData.get('content') : null,
+          image_url: formData.get('image-url') || null
+        };
+
+        const response = await fetch('/api/posts/submit', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(submitData)
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+          showMessage('success', 'Post submitted successfully! Redirecting...');
+          setTimeout(() => {
+            window.location.href = `/p/${result.slug}`;
+          }, 1000);
+        } else {
+          throw new Error(result.error || 'Failed to submit post');
+        }
+
+      } catch (error) {
+        console.error('Submit error:', error);
+        showMessage('error', error.message || 'Failed to submit post. Please try again.');
+        
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit Post';
+      }
+    });
+
+    function showMessage(type, text) {
+      const bgColor = type === 'success' ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800';
+      const textColor = type === 'success' ? 'text-green-800 dark:text-green-200' : 'text-red-800 dark:text-red-200';
+      
+      messageContainer.className = `mt-6 border rounded-lg p-4 ${bgColor}`;
+      messageContainer.innerHTML = `<p class="${textColor}">${text}</p>`;
+      messageContainer.classList.remove('hidden');
+    }
+  });
+
+  async function checkAuth() {
+    try {
+      const authToken = localStorage.getItem('auth_token');
+      if (!authToken) return false;
+      
+      const response = await fetch('/api/auth/me', {
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
+      
+      return response.ok;
+    } catch (error) {
+      console.error('Auth check failed:', error);
+      return false;
+    }
+  }
+</script>

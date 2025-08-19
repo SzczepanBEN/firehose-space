@@ -1,0 +1,182 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const token = Astro.url.searchParams.get('token');
+---
+
+<BaseLayout title="Verify Login" description="Verifying your login token..." noIndex={true}>
+  <div class="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-8">
+      
+      <!-- Loading State -->
+      <div id="loading-state" class="text-center">
+        <div class="mx-auto h-12 w-12 bg-orange-500 rounded-full flex items-center justify-center animate-pulse">
+          <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017 13s.879.5 2.5.5c0-1 .5-4 1.25-4.5.5 1 .786 1.293 1.371 1.879A2.99 2.99 0 0113 13a2.99 2.99 0 01-.879 2.121z" clip-rule="evenodd"></path>
+          </svg>
+        </div>
+        <h2 class="mt-6 text-2xl font-bold text-gray-900 dark:text-white">
+          Verifying your login...
+        </h2>
+        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+          Please wait while we sign you in.
+        </p>
+        
+        <!-- Loading spinner -->
+        <div class="mt-8">
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 mx-auto"></div>
+        </div>
+      </div>
+
+      <!-- Success State -->
+      <div id="success-state" class="hidden text-center">
+        <div class="mx-auto h-12 w-12 bg-green-500 rounded-full flex items-center justify-center">
+          <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+          </svg>
+        </div>
+        <h2 class="mt-6 text-2xl font-bold text-gray-900 dark:text-white">
+          Welcome to Firehose! 🎉
+        </h2>
+        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+          You've been successfully signed in. Redirecting you to the homepage...
+        </p>
+        
+        <div class="mt-6">
+          <a 
+            href="/"
+            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+          >
+            Go to Homepage
+          </a>
+        </div>
+      </div>
+
+      <!-- Error State -->
+      <div id="error-state" class="hidden text-center">
+        <div class="mx-auto h-12 w-12 bg-red-500 rounded-full flex items-center justify-center">
+          <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+          </svg>
+        </div>
+        <h2 class="mt-6 text-2xl font-bold text-gray-900 dark:text-white">
+          Login Failed
+        </h2>
+        <p id="error-message" class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+          The login link is invalid or has expired.
+        </p>
+        
+        <div class="mt-6 space-y-3">
+          <a 
+            href="/login"
+            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+          >
+            Try Again
+          </a>
+          <div>
+            <a href="/" class="text-sm text-orange-600 dark:text-orange-400 hover:text-orange-500">
+              ← Back to homepage
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- No Token State -->
+      <div id="no-token-state" class="hidden text-center">
+        <div class="mx-auto h-12 w-12 bg-yellow-500 rounded-full flex items-center justify-center">
+          <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+          </svg>
+        </div>
+        <h2 class="mt-6 text-2xl font-bold text-gray-900 dark:text-white">
+          Invalid Login Link
+        </h2>
+        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+          This login link appears to be missing or malformed.
+        </p>
+        
+        <div class="mt-6 space-y-3">
+          <a 
+            href="/login"
+            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+          >
+            Get New Login Link
+          </a>
+          <div>
+            <a href="/" class="text-sm text-orange-600 dark:text-orange-400 hover:text-orange-500">
+              ← Back to homepage
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</BaseLayout>
+
+<script define:vars={{ token }}>
+  document.addEventListener('DOMContentLoaded', async () => {
+    const loadingState = document.getElementById('loading-state');
+    const successState = document.getElementById('success-state');
+    const errorState = document.getElementById('error-state');
+    const noTokenState = document.getElementById('no-token-state');
+    const errorMessage = document.getElementById('error-message');
+
+    // Check if token exists
+    if (!token) {
+      loadingState.classList.add('hidden');
+      noTokenState.classList.remove('hidden');
+      return;
+    }
+
+    try {
+      // Verify the magic token
+      const response = await fetch('/api/auth/verify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ token })
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        // Success! Store the session token
+        if (result.token) {
+          localStorage.setItem('auth_token', result.token);
+          
+          // Store user data
+          if (result.user) {
+            localStorage.setItem('user_data', JSON.stringify(result.user));
+          }
+        }
+
+        loadingState.classList.add('hidden');
+        successState.classList.remove('hidden');
+
+        // Redirect after 2 seconds
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 2000);
+
+      } else {
+        throw new Error(result.error || 'Verification failed');
+      }
+
+    } catch (error) {
+      console.error('Verification error:', error);
+      
+      loadingState.classList.add('hidden');
+      errorState.classList.remove('hidden');
+      
+      // Update error message based on the specific error
+      if (error.message.includes('expired')) {
+        errorMessage.textContent = 'This login link has expired. Login links are only valid for 15 minutes.';
+      } else if (error.message.includes('invalid')) {
+        errorMessage.textContent = 'This login link is invalid or has already been used.';
+      } else {
+        errorMessage.textContent = 'Something went wrong during login verification. Please try again.';
+      }
+    }
+  });
+</script>

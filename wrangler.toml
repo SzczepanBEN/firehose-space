@@ -1,0 +1,40 @@
+name = "firehose-space"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+[env.production]
+name = "firehose-space"
+route = { pattern = "firehose.space/*", zone_name = "firehose.space" }
+
+[env.production.vars]
+ENVIRONMENT = "production"
+SITE_URL = "https://firehose.space"
+
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "firehose-db"
+database_id = "your-database-id-here"
+
+[[env.production.kv_namespaces]]
+binding = "CACHE"
+id = "your-kv-namespace-id-here"
+
+[env.development]
+name = "firehose-space-dev"
+
+[env.development.vars]
+ENVIRONMENT = "development"
+SITE_URL = "http://localhost:3000"
+
+[[env.development.d1_databases]]
+binding = "DB"
+database_name = "firehose-db-dev"
+database_id = "your-dev-database-id-here"
+
+[[env.development.kv_namespaces]]
+binding = "CACHE"
+id = "your-dev-kv-namespace-id-here"
+
+# Cron triggers for calculating hotness and leaderboards
+[[triggers.crons]]
+crons = ["0 */1 * * *"]  # Every hour

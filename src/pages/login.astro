@@ -1,0 +1,220 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Login" description="Login to Firehose.space with a magic link">
+  <div class="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-8">
+      
+      <!-- Header -->
+      <div class="text-center">
+        <div class="mx-auto h-12 w-12 bg-orange-500 rounded-full flex items-center justify-center">
+          <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017 13s.879.5 2.5.5c0-1 .5-4 1.25-4.5.5 1 .786 1.293 1.371 1.879A2.99 2.99 0 0113 13a2.99 2.99 0 01-.879 2.121z" clip-rule="evenodd"></path>
+          </svg>
+        </div>
+        <h2 class="mt-6 text-3xl font-extrabold text-gray-900 dark:text-white">
+          Welcome to Firehose
+        </h2>
+        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+          Sign in to start sharing and voting on content
+        </p>
+      </div>
+
+      <!-- Login Form -->
+      <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg px-8 py-8">
+        <form id="login-form" class="space-y-6">
+          
+          <!-- Email Input -->
+          <div>
+            <label for="email" class="sr-only">Email address</label>
+            <input 
+              id="email" 
+              name="email" 
+              type="email" 
+              autocomplete="email" 
+              required
+              class="relative block w-full px-3 py-3 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-orange-500 focus:border-orange-500 focus:z-10 bg-white dark:bg-gray-700"
+              placeholder="Enter your email address"
+            >
+          </div>
+
+          <!-- Magic Link Explanation -->
+          <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+            <div class="flex">
+              <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                </svg>
+              </div>
+              <div class="ml-3">
+                <h3 class="text-sm font-medium text-blue-800 dark:text-blue-200">
+                  How it works
+                </h3>
+                <div class="mt-1 text-sm text-blue-700 dark:text-blue-300">
+                  <p>We'll send you a secure login link via email. No passwords needed!</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Submit Button -->
+          <div>
+            <button 
+              type="submit" 
+              id="submit-btn"
+              class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+            >
+              <span class="absolute left-0 inset-y-0 flex items-center pl-3">
+                <svg class="h-5 w-5 text-orange-500 group-hover:text-orange-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path>
+                  <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path>
+                </svg>
+              </span>
+              Send Magic Link
+            </button>
+          </div>
+        </form>
+
+        <!-- Success/Error Messages -->
+        <div id="message-container" class="mt-6 hidden"></div>
+
+        <!-- Back to Home -->
+        <div class="mt-6 text-center">
+          <a href="/" class="text-orange-600 dark:text-orange-400 hover:text-orange-500 text-sm">
+            ← Back to homepage
+          </a>
+        </div>
+      </div>
+
+      <!-- Terms Notice -->
+      <div class="text-center">
+        <p class="text-xs text-gray-500 dark:text-gray-400">
+          By signing in, you agree to our 
+          <a href="/terms" class="text-orange-600 dark:text-orange-400 hover:text-orange-500">Terms of Service</a> 
+          and 
+          <a href="/privacy" class="text-orange-600 dark:text-orange-400 hover:text-orange-500">Privacy Policy</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</BaseLayout>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('login-form');
+    const emailInput = document.getElementById('email');
+    const submitBtn = document.getElementById('submit-btn');
+    const messageContainer = document.getElementById('message-container');
+
+    // Check if user is already logged in
+    checkExistingAuth();
+
+    async function checkExistingAuth() {
+      try {
+        const response = await fetch('/api/auth/me');
+        if (response.ok) {
+          // User is already logged in, redirect to home
+          window.location.href = '/';
+          return;
+        }
+      } catch (error) {
+        // Not logged in, continue with login flow
+      }
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const email = emailInput.value.trim();
+      if (!email) {
+        showMessage('error', 'Please enter your email address');
+        return;
+      }
+
+      if (!isValidEmail(email)) {
+        showMessage('error', 'Please enter a valid email address');
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Sending...';
+
+      try {
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email })
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+          showMessage('success', 
+            `Magic link sent to ${email}! Check your email and click the link to sign in. The link expires in 15 minutes.`
+          );
+          emailInput.disabled = true;
+          
+          // DEV MODE: Auto-login after 2 seconds
+          if (window.location.hostname === 'localhost') {
+            setTimeout(() => {
+              // Set a dev token
+              localStorage.setItem('auth_token', 'dev-token-' + Date.now());
+              showMessage('success', 'DEV MODE: Auto-logged in! Redirecting...');
+              setTimeout(() => {
+                window.location.href = '/';
+              }, 1000);
+            }, 2000);
+          }
+        } else {
+          throw new Error(result.error || 'Failed to send magic link');
+        }
+
+      } catch (error) {
+        console.error('Login error:', error);
+        showMessage('error', error.message || 'Failed to send magic link. Please try again.');
+        
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Send Magic Link';
+      }
+    });
+
+    function isValidEmail(email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return emailRegex.test(email);
+    }
+
+    function showMessage(type, text) {
+      const bgColor = type === 'success' 
+        ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' 
+        : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800';
+      
+      const textColor = type === 'success' 
+        ? 'text-green-800 dark:text-green-200' 
+        : 'text-red-800 dark:text-red-200';
+      
+      const icon = type === 'success'
+        ? `<svg class="h-5 w-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+           </svg>`
+        : `<svg class="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+           </svg>`;
+      
+      messageContainer.className = `mt-6 border rounded-lg p-4 ${bgColor}`;
+      messageContainer.innerHTML = `
+        <div class="flex">
+          <div class="flex-shrink-0">
+            ${icon}
+          </div>
+          <div class="ml-3">
+            <p class="${textColor} text-sm">${text}</p>
+          </div>
+        </div>
+      `;
+      messageContainer.classList.remove('hidden');
+    }
+  });
+</script>
