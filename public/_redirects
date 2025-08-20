@@ -1,5 +1,0 @@
-# All API calls handled by the same domain (Worker route)
-# No redirects needed - Worker handles /api/* directly on firehose.space
-
-# Fallback for Astro routing
-/404 /404.html 404

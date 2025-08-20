@@ -2,8 +2,15 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { marked } from 'marked';
 
-// For development, we'll disable prerendering so it works dynamically
-export const prerender = false;
+// Static generation - we'll use getStaticPaths for dynamic routes
+export async function getStaticPaths() {
+  // Return mock paths for now - in production this would fetch from API
+  return [
+    {params: {slug: 'sample-post'}},
+    {params: {slug: 'another-post'}},
+    {params: {slug: 'test-article'}}
+  ];
+}
 
 const { slug } = Astro.params;
 
