@@ -71,11 +71,13 @@ class EmailService {
       });
 
       if (!response.ok) {
-        console.error('Resend API error:', await response.text());
+        const errorText = await response.text();
+        console.error(`Resend API error (${response.status}):`, errorText);
         return false;
       }
 
-      console.log(`Magic link sent successfully to ${email}`);
+      const result = await response.json();
+      console.log(`Magic link sent successfully to ${email}. Email ID:`, result.id);
       return true;
     } catch (error) {
       console.error('Failed to send email via Resend:', error);
