@@ -46,6 +46,90 @@ interface Post {
 // JWT utilities - secret will be set from env in fetch handler
 let jwtSecretKey: Uint8Array;
 
+// Email Service for Magic Links
+class EmailService {
+  private apiKey: string;
+
+  constructor(apiKey: string) {
+    this.apiKey = apiKey;
+  }
+
+  async sendMagicLink(email: string, magicLink: string): Promise<boolean> {
+    try {
+      const response = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: 'Firehose <noreply@firehose.space>',
+          to: [email],
+          subject: 'Your Magic Link for Firehose.space 🔥',
+          html: this.generateMagicLinkEmail(email, magicLink),
+        }),
+      });
+
+      if (!response.ok) {
+        console.error('Resend API error:', await response.text());
+        return false;
+      }
+
+      console.log(`Magic link sent successfully to ${email}`);
+      return true;
+    } catch (error) {
+      console.error('Failed to send email via Resend:', error);
+      return false;
+    }
+  }
+
+  private generateMagicLinkEmail(email: string, magicLink: string): string {
+    return `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Magic Link for Firehose.space</title>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333; }
+        .header { text-align: center; margin-bottom: 40px; }
+        .logo { display: inline-flex; align-items: center; gap: 8px; font-size: 24px; font-weight: bold; color: #EA580C; }
+        .button { display: inline-block; background: #EA580C; color: white; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; margin: 20px 0; }
+        .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; font-size: 14px; color: #666; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">🔥 Firehose</div>
+    </div>
+
+    <h1>Welcome to Firehose! 🚀</h1>
+    
+    <p>You requested to sign in to <strong>Firehose.space</strong> using <strong>${email}</strong>.</p>
+    
+    <p>Click the button below to complete your login:</p>
+    
+    <div style="text-align: center; margin: 40px 0;">
+        <a href="${magicLink}" class="button">Sign In to Firehose</a>
+    </div>
+    
+    <p>Or copy this link: <br><code style="word-break: break-all; background: #f5f5f5; padding: 8px; border-radius: 4px;">${magicLink}</code></p>
+    
+    <div style="background: #FEF3C7; border: 1px solid #F59E0B; border-radius: 8px; padding: 16px; margin: 24px 0;">
+        <p style="margin: 0; color: #92400E;">
+            <strong>⚠️ Security:</strong> This link expires in 15 minutes and can only be used once.
+        </p>
+    </div>
+
+    <div class="footer">
+        <p>Firehose.space - The global feed of links and articles</p>
+    </div>
+</body>
+</html>`;
+  }
+}
+
 async function createJWT(payload: any): Promise<string> {
   return await new EncryptJWT(payload)
     .setProtectedHeader({ alg: 'dir', enc: 'A256GCM' })

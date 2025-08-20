@@ -16,7 +16,7 @@ id = "112f09795aa74b2081f17a65346cc0d1"
 
 [env.production]
 name = "firehose-space"
-route = { pattern = "firehose.space/*", zone_name = "firehose.space" }
+route = { pattern = "firehose.space/api/*", zone_name = "firehose.space" }
 
 [env.production.vars]
 ENVIRONMENT = "production"
