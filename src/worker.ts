@@ -151,20 +151,41 @@ async function verifyJWT(token: string): Promise<any> {
 
 // Auth utilities
 async function getCurrentUser(request: Request, env: Env): Promise<User | null> {
+  let token: string | null = null;
+
+  // Try Authorization header first (for API requests)
   const authHeader = request.headers.get('Authorization');
-  if (!authHeader?.startsWith('Bearer ')) return null;
+  if (authHeader?.startsWith('Bearer ')) {
+    token = authHeader.split(' ')[1];
+  }
 
-  const token = authHeader.split(' ')[1];
-  const payload = await verifyJWT(token);
-  
-  if (!payload?.user_id) return null;
+  // If no Bearer token, try Cookie (for browser requests)
+  if (!token) {
+    const cookies = request.headers.get('Cookie');
+    if (cookies) {
+      const authCookie = cookies.split(';').find(c => c.trim().startsWith('auth_token='));
+      if (authCookie) {
+        token = authCookie.split('=')[1];
+      }
+    }
+  }
 
-  const user = await env.DB
-    .prepare('SELECT * FROM users WHERE id = ?')
-    .bind(payload.user_id)
-    .first<User>();
+  if (!token) return null;
 
-  return user || null;
+  try {
+    const payload = await verifyJWT(token);
+    if (!payload?.user_id) return null;
+
+    const user = await env.DB
+      .prepare('SELECT * FROM users WHERE id = ?')
+      .bind(payload.user_id)
+      .first<User>();
+
+    return user || null;
+  } catch (error) {
+    console.error('JWT verification error:', error);
+    return null;
+  }
 }
 
 // Rate limiting
@@ -226,7 +247,8 @@ async function hashUrl(url: string): Promise<string> {
 const routes = {
   // Auth routes
   'POST /api/auth/login': handleLogin,
-  'POST /api/auth/verify': handleVerifyLogin,
+  'GET /auth/verify': handleVerifyLogin,  // Frontend magic link verification
+  'POST /api/auth/verify': handleVerifyLogin,  // API endpoint (backward compatibility)
   'GET /api/auth/me': handleGetMe,
   'POST /api/auth/logout': handleLogout,
   
@@ -308,7 +330,31 @@ async function handleLogin(request: Request, env: Env): Promise<Response> {
 
 async function handleVerifyLogin(request: Request, env: Env): Promise<Response> {
   try {
-    const { token } = await request.json();
+    // Support both GET (magic link) and POST (API) requests
+    let token;
+    if (request.method === 'GET') {
+      // Magic link from email: /auth/verify?token=XXXXX
+      const url = new URL(request.url);
+      token = url.searchParams.get('token');
+    } else {
+      // API request with JSON body
+      const body = await request.json();
+      token = body.token;
+    }
+
+    if (!token) {
+      if (request.method === 'GET') {
+        return new Response(null, {
+          status: 302,
+          headers: { 'Location': '/login?error=missing_token' }
+        });
+      } else {
+        return new Response(JSON.stringify({ error: 'Token required' }), { 
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+    }
     
     const magicToken = await env.DB
       .prepare('SELECT * FROM magic_tokens WHERE token = ? AND used = FALSE AND expires_at > ?')
@@ -316,10 +362,21 @@ async function handleVerifyLogin(request: Request, env: Env): Promise<Response> 
       .first();
 
     if (!magicToken) {
-      return new Response(JSON.stringify({ error: 'Invalid or expired token' }), { 
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
+      if (request.method === 'GET') {
+        // Magic link - redirect to login with error message
+        return new Response(null, {
+          status: 302,
+          headers: {
+            'Location': '/login?error=invalid_token'
+          }
+        });
+      } else {
+        // API request - return JSON error
+        return new Response(JSON.stringify({ error: 'Invalid or expired token' }), { 
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
     }
 
     // Mark token as used
@@ -348,35 +405,60 @@ async function handleVerifyLogin(request: Request, env: Env): Promise<Response> 
         .bind(userId)
         .first<User>();
 
-      // Send welcome email for new users
-      if (user) {
-        const emailService = new EmailService(env.RESEND_API_KEY);
-        await emailService.sendWelcomeEmail(user.email, user.display_name);
-      }
+      // TODO: Send welcome email for new users
+      // const emailService = new EmailService(env.RESEND_API_KEY);
+      // await emailService.sendWelcomeEmail(user.email, user.display_name);
     }
 
     // Create session JWT
     const sessionToken = await createJWT({ user_id: user.id });
 
-    return new Response(JSON.stringify({ 
-      success: true,
-      token: sessionToken,
-      user: {
-        id: user.id,
-        email: user.email,
-        display_name: user.display_name,
-        avatar_url: user.avatar_url
-      }
-    }), {
-      headers: { 'Content-Type': 'application/json' }
-    });
+    // Handle different response types
+    if (request.method === 'GET') {
+      // Magic link - redirect to frontend verification page with magic token parameter
+      const verifyUrl = new URL('/auth/verify', env.SITE_URL);
+      verifyUrl.searchParams.set('token', token);
+      
+      return new Response(null, {
+        status: 302,
+        headers: {
+          'Location': verifyUrl.toString()
+        }
+      });
+    } else {
+      // API request - return JSON
+      return new Response(JSON.stringify({ 
+        success: true,
+        token: sessionToken,
+        user: {
+          id: user.id,
+          email: user.email,
+          display_name: user.display_name,
+          avatar_url: user.avatar_url
+        }
+      }), {
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
 
   } catch (error) {
     console.error('Verify login error:', error);
-    return new Response(JSON.stringify({ error: 'Verification failed' }), { 
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    
+    if (request.method === 'GET') {
+      // Magic link - redirect to login with error
+      return new Response(null, {
+        status: 302,
+        headers: {
+          'Location': '/login?error=verification_failed'
+        }
+      });
+    } else {
+      // API request - return JSON error
+      return new Response(JSON.stringify({ error: 'Verification failed' }), { 
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
   }
 }
 
@@ -1342,8 +1424,10 @@ async function handleUpdateLeaderboard(request: Request, env: Env): Promise<Resp
 // Main Worker handler
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
-    // Initialize JWT secret from environment
-    jwtSecretKey = new TextEncoder().encode(env.JWT_SECRET || 'default-secret-change-me');
+    // Initialize JWT secret from environment - hash to exactly 32 bytes for A256GCM
+    const secretData = new TextEncoder().encode(env.JWT_SECRET || 'default-secret-change-me');
+    const hashBuffer = await crypto.subtle.digest('SHA-256', secretData);
+    jwtSecretKey = new Uint8Array(hashBuffer);
     
     const url = new URL(request.url);
     const method = request.method;
