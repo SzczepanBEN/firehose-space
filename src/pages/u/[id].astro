@@ -1,15 +1,8 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 
-// Static generation - we'll use getStaticPaths for dynamic routes
-export async function getStaticPaths() {
-  // Return mock paths for now - in production this would fetch from API
-  return [
-    {params: {id: 'user1'}},
-    {params: {id: 'user2'}},
-    {params: {id: 'demo-user'}}
-  ];
-}
+// Dynamic route - disable prerendering to handle any user ID at runtime
+export const prerender = false;
 
 const { id } = Astro.params;
 

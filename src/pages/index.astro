@@ -233,7 +233,7 @@ function getTimeAgo(timestamp: number): string {
   async function loadPosts(append = false) {
     try {
       const urlParams = new URLSearchParams(window.location.search);
-      const sort = urlParams.get('sort') || 'hot';
+      const sort = urlParams.get('sort') || 'new';
       
       const response = await fetch(`/api/posts/feed?sort=${sort}&limit=${postsPerPage}&offset=${append ? currentOffset : 0}`);
       
