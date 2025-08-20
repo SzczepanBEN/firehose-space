@@ -40,22 +40,29 @@ const ogImage = `https://firehose.space/api/og/post/${slug}`;
   </div>
 
 <script>
-  // Load post data and render content
-  document.addEventListener('DOMContentLoaded', async () => {
-    const slug = window.location.pathname.split('/p/')[1];
-    
-    try {
-      const response = await fetch('/api/posts/feed?limit=100&sort=new');
-      if (!response.ok) throw new Error('Failed to fetch posts');
-      
-      const data = await response.json();
-      const post = data.posts?.find(p => p.slug === slug);
-      
-      if (!post) {
-        document.getElementById('loading').classList.add('hidden');
-        document.getElementById('error-404').classList.remove('hidden');
-        return;
-      }
+           // Load post data and render content
+         document.addEventListener('DOMContentLoaded', async () => {
+           const slug = window.location.pathname.split('/p/')[1];
+
+           try {
+             // Use the individual post API endpoint instead of searching the feed
+             const authToken = window.getAuthToken();
+             const headers = {};
+             if (authToken) {
+               headers['Authorization'] = `Bearer ${authToken}`;
+             }
+             
+             const response = await fetch(`/api/posts/${slug}`, { headers });
+             if (!response.ok) {
+               if (response.status === 404) {
+                 document.getElementById('loading').classList.add('hidden');
+                 document.getElementById('error-404').classList.remove('hidden');
+                 return;
+               }
+               throw new Error('Failed to fetch post');
+             }
+
+             const post = await response.json();
       
       // Update page title
       document.title = `${post.title} - Firehose`;
@@ -101,17 +108,29 @@ const ogImage = `https://firehose.space/api/og/post/${slug}`;
                   </div>
                 ` : ''}
                 
-                <!-- Author and Meta Info -->
-                <div class="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
-                  <div class="flex items-center space-x-2">
-                    <img src="${post.author_avatar_url || '/default-avatar.svg'}" alt="${post.author_display_name}" class="w-8 h-8 rounded-full">
-                    <div class="flex flex-col">
-                      <a href="/u/${post.author_id}" class="font-medium text-gray-900 dark:text-white hover:text-orange-600 dark:hover:text-orange-400">${post.author_display_name}</a>
-                    </div>
-                  </div>
-                  <span>•</span>
-                  <time>${getTimeAgo(post.created_at)}</time>
-                </div>
+                                       <!-- Author and Meta Info -->
+                       <div class="flex items-center justify-between">
+                         <div class="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
+                           <div class="flex items-center space-x-2">
+                             <img src="${post.author_avatar_url || '/default-avatar.svg'}" alt="${post.author_display_name}" class="w-8 h-8 rounded-full">
+                             <div class="flex flex-col">
+                               <a href="/u/${post.author_id}" class="font-medium text-gray-900 dark:text-white hover:text-orange-600 dark:hover:text-orange-400">${post.author_display_name}</a>
+                             </div>
+                           </div>
+                           <span>•</span>
+                           <time>${getTimeAgo(post.created_at)}</time>
+                         </div>
+                         
+                         <!-- Edit button (visible only if user can edit) -->
+                         ${post.can_edit ? `
+                           <a href="/p/${post.slug}/edit" class="inline-flex items-center space-x-1 text-sm text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-500 font-medium transition-colors">
+                             <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                               <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path>
+                             </svg>
+                             <span>Edit</span>
+                           </a>
+                         ` : ''}
+                       </div>
               </div>
             </div>
           </div>
@@ -188,16 +207,19 @@ const ogImage = `https://firehose.space/api/og/post/${slug}`;
   function extractAndDisplayFeaturedImage(post) {
     let imageUrl = null;
     
-    // 1. Check if it's a link post with image URL
-    if (post.type === 'link' && post.url) {
+    // 1. First priority: image_url from form (user-provided image)
+    if (post.image_url) {
+      imageUrl = post.image_url;
+    }
+    // 2. Second priority: if it's a link post with direct image URL
+    else if (post.type === 'link' && post.url) {
       const url = post.url.toLowerCase();
       if (url.match(/\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/)) {
         imageUrl = post.url;
       }
     }
-    
-    // 2. Extract first image from markdown content
-    if (!imageUrl && post.body_markdown) {
+    // 3. Third priority: extract first image from markdown content
+    else if (post.body_markdown) {
       // Match markdown image syntax: ![alt](url)
       const imageMatch = post.body_markdown.match(/!\[.*?\]\((https?:\/\/[^\s)]+)\)/);
       if (imageMatch) {

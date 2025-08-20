@@ -255,6 +255,7 @@ const routes = {
   'POST /api/posts/submit': handleSubmitPost,
   'GET /api/posts/feed': handleGetFeed,
   'GET /api/posts/:id': handleGetPost,
+  'PUT /api/posts/:id': handleEditPost,
   'POST /api/posts/:id/vote': handleVotePost,
   'POST /api/posts/:id/click': handleTrackClick,
   
@@ -457,7 +458,7 @@ async function handleSubmitPost(request: Request, env: Env): Promise<Response> {
   }
 
   try {
-    const { type, title, url, content } = await request.json();
+    const { type, title, url, content, image_url } = await request.json();
     
     if (!title || !type || !['link', 'self'].includes(type)) {
       return new Response(JSON.stringify({ error: 'Invalid post data' }), { 
@@ -507,10 +508,10 @@ async function handleSubmitPost(request: Request, env: Env): Promise<Response> {
     // Insert post
     await env.DB
       .prepare(`
-        INSERT INTO posts (id, type, title, url, slug, domain, normalized_url_hash, author_id)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO posts (id, type, title, url, slug, domain, image_url, normalized_url_hash, author_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       `)
-      .bind(postId, type, title, url, slug, domain, normalizedUrlHash, user.id)
+      .bind(postId, type, title, url, slug, domain, image_url, normalizedUrlHash, user.id)
       .run();
 
     // Insert content for self posts
@@ -545,6 +546,9 @@ async function handleGetFeed(request: Request, env: Env): Promise<Response> {
     const period = url.searchParams.get('period') || '24h';
     const limit = Math.min(parseInt(url.searchParams.get('limit') || '50'), 100);
     const offset = parseInt(url.searchParams.get('offset') || '0');
+    
+    // Get current user for edit permission checks
+    const user = await getCurrentUser(request, env);
 
     let orderBy = 'p.hotness DESC';
     let whereClause = '';
@@ -621,8 +625,25 @@ async function handleGetFeed(request: Request, env: Env): Promise<Response> {
       .bind(...bindParams)
       .all();
 
+    // Add edit permissions to each post
+    const now = Math.floor(Date.now() / 1000);
+    const twoHoursInSeconds = 2 * 60 * 60; // 2 hours
+    
+    const postsWithMeta = (posts.results || []).map(post => {
+      let canEdit = false;
+      if (user && post.author_id === user.id) {
+        canEdit = (now - post.created_at) <= twoHoursInSeconds;
+      }
+      
+      return {
+        ...post,
+        can_edit: canEdit,
+        is_author: user ? post.author_id === user.id : false
+      };
+    });
+
     return new Response(JSON.stringify({
-      posts: posts.results || [],
+      posts: postsWithMeta,
       pagination: {
         limit,
         offset,
@@ -643,8 +664,167 @@ async function handleGetFeed(request: Request, env: Env): Promise<Response> {
 
 // Additional handlers would go here...
 async function handleGetPost(request: Request, env: Env, params: Record<string, string>): Promise<Response> {
-  // TODO: Implement individual post fetching
-  return new Response(JSON.stringify({ error: 'Not implemented yet' }), { status: 501 });
+  try {
+    const postId = params.id;
+    const user = await getCurrentUser(request, env);
+    
+    // Get post with author info and body
+    const post = await env.DB
+      .prepare(`
+        SELECT 
+          p.*,
+          u.display_name as author_display_name,
+          u.avatar_url as author_avatar_url,
+          pb.markdown as body_markdown
+        FROM posts p
+        JOIN users u ON p.author_id = u.id
+        LEFT JOIN post_bodies pb ON p.id = pb.post_id
+        WHERE p.id = ? OR p.slug = ?
+      `)
+      .bind(postId, postId)
+      .first();
+
+    if (!post) {
+      return new Response(JSON.stringify({ error: 'Post not found' }), { 
+        status: 404,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Check if current user can edit this post (author + within 2h)
+    let canEdit = false;
+    if (user && post.author_id === user.id) {
+      const now = Math.floor(Date.now() / 1000);
+      const createdAt = post.created_at;
+      const twoHoursInSeconds = 2 * 60 * 60; // 2 hours
+      canEdit = (now - createdAt) <= twoHoursInSeconds;
+    }
+
+    // Add editability info to post
+    const postWithMeta = {
+      ...post,
+      can_edit: canEdit,
+      is_author: user ? post.author_id === user.id : false
+    };
+
+    return new Response(JSON.stringify(postWithMeta), {
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+  } catch (error) {
+    console.error('Get post error:', error);
+    return new Response(JSON.stringify({ error: 'Failed to load post' }), { 
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+}
+
+async function handleEditPost(request: Request, env: Env, params: Record<string, string>): Promise<Response> {
+  // Authentication check
+  const user = await getCurrentUser(request, env);
+  
+  if (!user) {
+    return new Response(JSON.stringify({ error: 'Authentication required' }), { 
+      status: 401,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+
+  try {
+    const postId = params.id;
+    const { title, content, image_url } = await request.json();
+    
+    if (!title || title.trim().length === 0) {
+      return new Response(JSON.stringify({ error: 'Title is required' }), { 
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Get the existing post
+    const existingPost = await env.DB
+      .prepare(`
+        SELECT id, type, title, url, author_id, created_at, updated_at 
+        FROM posts 
+        WHERE id = ? OR slug = ?
+      `)
+      .bind(postId, postId)
+      .first();
+
+    if (!existingPost) {
+      return new Response(JSON.stringify({ error: 'Post not found' }), { 
+        status: 404,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Check if user is the author
+    if (existingPost.author_id !== user.id) {
+      return new Response(JSON.stringify({ error: 'You can only edit your own posts' }), { 
+        status: 403,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Check if post is within 2-hour edit window
+    const now = Math.floor(Date.now() / 1000);
+    const createdAt = existingPost.created_at;
+    const twoHoursInSeconds = 2 * 60 * 60; // 2 hours
+    
+    if (now - createdAt > twoHoursInSeconds) {
+      return new Response(JSON.stringify({ 
+        error: 'Posts can only be edited within 2 hours of creation' 
+      }), { 
+        status: 403,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    // For self posts, content is required
+    if (existingPost.type === 'self' && (!content || content.trim().length === 0)) {
+      return new Response(JSON.stringify({ error: 'Content is required for self posts' }), { 
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Update the post
+    await env.DB
+      .prepare(`
+        UPDATE posts 
+        SET title = ?, image_url = ?, updated_at = unixepoch()
+        WHERE id = ?
+      `)
+      .bind(title.trim(), image_url || null, existingPost.id)
+      .run();
+
+    // Update content for self posts
+    if (existingPost.type === 'self' && content) {
+      await env.DB
+        .prepare(`
+          UPDATE post_bodies 
+          SET markdown = ? 
+          WHERE post_id = ?
+        `)
+        .bind(content.trim(), existingPost.id)
+        .run();
+    }
+
+    return new Response(JSON.stringify({ 
+      success: true,
+      message: 'Post updated successfully'
+    }), {
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+  } catch (error) {
+    console.error('Edit post error:', error);
+    return new Response(JSON.stringify({ error: 'Failed to update post' }), { 
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
 }
 
 async function handleVotePost(request: Request, env: Env, params: Record<string, string>): Promise<Response> {

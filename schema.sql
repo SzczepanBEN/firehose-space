@@ -19,6 +19,7 @@ CREATE TABLE posts (
   url TEXT, -- NULL for self posts
   slug TEXT NOT NULL,
   domain TEXT, -- extracted from URL for link posts
+  image_url TEXT, -- Optional thumbnail image URL
   normalized_url_hash TEXT, -- for duplicate detection
   author_id TEXT NOT NULL REFERENCES users(id),
   score INTEGER DEFAULT 0,
