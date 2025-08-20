@@ -112,14 +112,26 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
     async function checkExistingAuth() {
       try {
-        const response = await fetch('/api/auth/me');
+        const authToken = localStorage.getItem('auth_token');
+        if (!authToken) return; // Not logged in
+
+        const response = await fetch('/api/auth/me', {
+          headers: {
+            'Authorization': `Bearer ${authToken}`
+          }
+        });
+        
         if (response.ok) {
           // User is already logged in, redirect to home
           window.location.href = '/';
           return;
+        } else {
+          // Token is invalid, remove it
+          localStorage.removeItem('auth_token');
         }
       } catch (error) {
         // Not logged in, continue with login flow
+        localStorage.removeItem('auth_token');
       }
     }
 

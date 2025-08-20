@@ -292,10 +292,17 @@ your code here
           image_url: formData.get('image-url') || null
         };
 
+        const authToken = localStorage.getItem('auth_token');
+        if (!authToken) {
+          showMessage('error', 'Authentication required. Please log in again.');
+          return;
+        }
+
         const response = await fetch('/api/posts/submit', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
           },
           body: JSON.stringify(submitData)
         });
@@ -307,6 +314,10 @@ your code here
           setTimeout(() => {
             window.location.href = `/p/${result.slug}`;
           }, 1000);
+        } else if (response.status === 401) {
+          // Token is invalid, remove it and redirect to login
+          localStorage.removeItem('auth_token');
+          throw new Error('Session expired. Please log in again.');
         } else {
           throw new Error(result.error || 'Failed to submit post');
         }
@@ -331,6 +342,11 @@ your code here
   });
 
   async function checkAuth() {
+    // Use global auth state if available
+    if (window.isAuthenticated && window.isAuthenticated()) {
+      return true;
+    }
+    
     try {
       const authToken = localStorage.getItem('auth_token');
       if (!authToken) return false;

@@ -124,7 +124,29 @@ const defaultOgImage = `${siteUrl}/og-image.png`;
               >
                 <img id="user-avatar" class="w-8 h-8 rounded-full" src="" alt="User avatar">
                 <span id="user-name"></span>
+                <svg class="w-4 h-4 ml-1" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                </svg>
               </button>
+              
+              <!-- Dropdown menu -->
+              <div 
+                id="user-dropdown" 
+                class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 z-50"
+              >
+                <div class="py-1">
+                  <a id="user-profile-link" href="#" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                    Your Profile
+                  </a>
+                  <hr class="border-gray-200 dark:border-gray-700">
+                  <button 
+                    id="logout-btn"
+                    class="block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -192,21 +214,42 @@ const defaultOgImage = `${siteUrl}/og-image.png`;
 
     // Check for existing session on page load
     document.addEventListener('DOMContentLoaded', async () => {
+      await checkAuthStatus();
+    });
+
+    async function checkAuthStatus() {
       try {
-        const response = await fetch('/api/auth/me');
+        const authToken = localStorage.getItem('auth_token');
+        if (!authToken) {
+          authState.isLoggedIn = false;
+          updateAuthUI();
+          return;
+        }
+
+        const response = await fetch('/api/auth/me', {
+          headers: {
+            'Authorization': `Bearer ${authToken}`
+          }
+        });
+        
         if (response.ok) {
           const user = await response.json();
           authState.user = user;
           authState.isLoggedIn = true;
           updateAuthUI();
         } else {
+          // Token is invalid, remove it
+          localStorage.removeItem('auth_token');
+          authState.isLoggedIn = false;
           updateAuthUI();
         }
       } catch (error) {
         console.error('Auth check failed:', error);
+        localStorage.removeItem('auth_token');
+        authState.isLoggedIn = false;
         updateAuthUI();
       }
-    });
+    }
 
     function updateAuthUI() {
       const authButtons = document.getElementById('auth-buttons');
@@ -219,20 +262,65 @@ const defaultOgImage = `${siteUrl}/og-image.png`;
         
         const userAvatar = document.getElementById('user-avatar');
         const userName = document.getElementById('user-name');
+        const userProfileLink = document.getElementById('user-profile-link');
         
         userAvatar.src = authState.user.avatar_url || '/default-avatar.svg';
         userName.textContent = authState.user.display_name;
+        userProfileLink.href = `/u/${authState.user.id}`;
       } else {
         authButtons.classList.remove('hidden');
         userMenu.classList.add('hidden');
       }
     }
 
-    // Login modal handler
+    // Login handler
     document.getElementById('login-btn')?.addEventListener('click', () => {
-      // TODO: Implement login modal
       window.location.href = '/login';
     });
+
+    // User dropdown toggle
+    document.getElementById('user-menu-btn')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const dropdown = document.getElementById('user-dropdown');
+      dropdown.classList.toggle('hidden');
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', () => {
+      const dropdown = document.getElementById('user-dropdown');
+      if (!dropdown.classList.contains('hidden')) {
+        dropdown.classList.add('hidden');
+      }
+    });
+
+    // Logout handler
+    document.getElementById('logout-btn')?.addEventListener('click', async () => {
+      try {
+        // Clear local storage
+        localStorage.removeItem('auth_token');
+        
+        // Reset auth state
+        authState.user = null;
+        authState.isLoggedIn = false;
+        
+        // Update UI
+        updateAuthUI();
+        
+        // Redirect to homepage
+        window.location.href = '/';
+      } catch (error) {
+        console.error('Logout failed:', error);
+      }
+    });
+
+    // Global auth helper function
+    window.isAuthenticated = () => {
+      return authState.isLoggedIn;
+    };
+
+    window.getAuthToken = () => {
+      return localStorage.getItem('auth_token');
+    };
   </script>
 </body>
 </html>
