@@ -247,8 +247,7 @@ async function hashUrl(url: string): Promise<string> {
 const routes = {
   // Auth routes
   'POST /api/auth/login': handleLogin,
-  'GET /auth/verify': handleVerifyLogin,  // Frontend magic link verification
-  'POST /api/auth/verify': handleVerifyLogin,  // API endpoint (backward compatibility)
+  'POST /api/auth/verify': handleVerifyLogin,  // API endpoint for frontend verification
   'GET /api/auth/me': handleGetMe,
   'POST /api/auth/logout': handleLogout,
   
@@ -330,30 +329,15 @@ async function handleLogin(request: Request, env: Env): Promise<Response> {
 
 async function handleVerifyLogin(request: Request, env: Env): Promise<Response> {
   try {
-    // Support both GET (magic link) and POST (API) requests
-    let token;
-    if (request.method === 'GET') {
-      // Magic link from email: /auth/verify?token=XXXXX
-      const url = new URL(request.url);
-      token = url.searchParams.get('token');
-    } else {
-      // API request with JSON body
-      const body = await request.json();
-      token = body.token;
-    }
+    // Parse magic token from request body
+    const body = await request.json();
+    const token = body.token;
 
     if (!token) {
-      if (request.method === 'GET') {
-        return new Response(null, {
-          status: 302,
-          headers: { 'Location': '/login?error=missing_token' }
-        });
-      } else {
-        return new Response(JSON.stringify({ error: 'Token required' }), { 
-          status: 400,
-          headers: { 'Content-Type': 'application/json' }
-        });
-      }
+      return new Response(JSON.stringify({ error: 'Token required' }), { 
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
     }
     
     const magicToken = await env.DB
@@ -362,21 +346,10 @@ async function handleVerifyLogin(request: Request, env: Env): Promise<Response> 
       .first();
 
     if (!magicToken) {
-      if (request.method === 'GET') {
-        // Magic link - redirect to login with error message
-        return new Response(null, {
-          status: 302,
-          headers: {
-            'Location': '/login?error=invalid_token'
-          }
-        });
-      } else {
-        // API request - return JSON error
-        return new Response(JSON.stringify({ error: 'Invalid or expired token' }), { 
-          status: 400,
-          headers: { 'Content-Type': 'application/json' }
-        });
-      }
+      return new Response(JSON.stringify({ error: 'Invalid or expired token' }), { 
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
     }
 
     // Mark token as used
@@ -413,52 +386,26 @@ async function handleVerifyLogin(request: Request, env: Env): Promise<Response> 
     // Create session JWT
     const sessionToken = await createJWT({ user_id: user.id });
 
-    // Handle different response types
-    if (request.method === 'GET') {
-      // Magic link - redirect to frontend verification page with magic token parameter
-      const verifyUrl = new URL('/auth/verify', env.SITE_URL);
-      verifyUrl.searchParams.set('token', token);
-      
-      return new Response(null, {
-        status: 302,
-        headers: {
-          'Location': verifyUrl.toString()
-        }
-      });
-    } else {
-      // API request - return JSON
-      return new Response(JSON.stringify({ 
-        success: true,
-        token: sessionToken,
-        user: {
-          id: user.id,
-          email: user.email,
-          display_name: user.display_name,
-          avatar_url: user.avatar_url
-        }
-      }), {
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
+    // API request - return JSON with session JWT
+    return new Response(JSON.stringify({ 
+      success: true,
+      token: sessionToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        display_name: user.display_name,
+        avatar_url: user.avatar_url
+      }
+    }), {
+      headers: { 'Content-Type': 'application/json' }
+    });
 
   } catch (error) {
     console.error('Verify login error:', error);
-    
-    if (request.method === 'GET') {
-      // Magic link - redirect to login with error
-      return new Response(null, {
-        status: 302,
-        headers: {
-          'Location': '/login?error=verification_failed'
-        }
-      });
-    } else {
-      // API request - return JSON error
-      return new Response(JSON.stringify({ error: 'Verification failed' }), { 
-        status: 500,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
+    return new Response(JSON.stringify({ error: 'Verification failed' }), { 
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 }
 
