@@ -186,12 +186,7 @@ function getTimeAgo(timestamp: number): string {
                     <span>{post.comments_count} comments</span>
                   </a>
 
-                  <!-- Post type indicator -->
-                  {post.type === 'self' && (
-                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                      Self Post
-                    </span>
-                  )}
+
                 </div>
               </div>
             </div>
@@ -270,6 +265,10 @@ function getTimeAgo(timestamp: number): string {
     if (!container) return;
     
     container.innerHTML = posts.map(post => createPostHTML(post)).join('');
+    
+    // Extract and display thumbnails for all posts
+    posts.forEach(post => extractAndDisplayThumbnail(post));
+    
     setupVoteHandlers();
   }
 
@@ -279,6 +278,10 @@ function getTimeAgo(timestamp: number): string {
     
     const postsHTML = posts.map(post => createPostHTML(post)).join('');
     container.insertAdjacentHTML('beforeend', postsHTML);
+    
+    // Extract and display thumbnails for new posts
+    posts.forEach(post => extractAndDisplayThumbnail(post));
+    
     setupVoteHandlers();
   }
 
@@ -313,6 +316,11 @@ function getTimeAgo(timestamp: number): string {
                   </a>
                 </h2>
                 
+                <!-- Featured Image (thumbnail) -->
+                <div id="thumbnail-${post.id}" class="mb-3 mt-2 hidden">
+                  <img class="w-full max-w-sm h-32 object-cover rounded-lg shadow-sm" alt="Post thumbnail" />
+                </div>
+                
                 ${post.domain ? `
                 <div class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
                   <span>(${post.domain})</span>
@@ -338,7 +346,7 @@ function getTimeAgo(timestamp: number): string {
                   <span>${post.comments_count} comments</span>
                 </a>
 
-                ${post.type === 'self' ? '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">Self Post</span>' : ''}
+
               </div>
             </div>
           </div>
@@ -429,7 +437,9 @@ function getTimeAgo(timestamp: number): string {
 
   function getTimeAgo(timestamp) {
     const now = Date.now();
-    const diff = now - timestamp;
+    // Convert timestamp from seconds to milliseconds if needed
+    const postTime = timestamp > 1000000000000 ? timestamp : timestamp * 1000;
+    const diff = now - postTime;
     const minutes = Math.floor(diff / 60000);
     const hours = Math.floor(diff / 3600000);
     const days = Math.floor(diff / 86400000);
@@ -438,5 +448,43 @@ function getTimeAgo(timestamp: number): string {
     if (hours > 0) return `${hours}h ago`;
     if (minutes > 0) return `${minutes}m ago`;
     return 'just now';
+  }
+  
+  function extractAndDisplayThumbnail(post) {
+    let imageUrl = null;
+    
+    // 1. Check if it's a link post with image URL
+    if (post.type === 'link' && post.url) {
+      const url = post.url.toLowerCase();
+      if (url.match(/\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/)) {
+        imageUrl = post.url;
+      }
+    }
+    
+    // 2. Extract first image from markdown content
+    if (!imageUrl && post.body_markdown) {
+      // Match markdown image syntax: ![alt](url)
+      const imageMatch = post.body_markdown.match(/!\[.*?\]\((https?:\/\/[^\s)]+)\)/);
+      if (imageMatch) {
+        imageUrl = imageMatch[1];
+      }
+    }
+    
+    // 3. Display the image if found
+    if (imageUrl) {
+      const imageContainer = document.getElementById(`thumbnail-${post.id}`);
+      const img = imageContainer?.querySelector('img');
+      
+      if (img && imageContainer) {
+        img.src = imageUrl;
+        img.alt = post.title;
+        imageContainer.classList.remove('hidden');
+        
+        // Handle image load errors
+        img.onerror = function() {
+          imageContainer.classList.add('hidden');
+        };
+      }
+    }
   }
 </script>
