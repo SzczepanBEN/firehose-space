@@ -279,6 +279,8 @@ const routes = {
   // OpenGraph image generation
   'GET /api/og/homepage': handleGenerateHomepageOGImage,
   
+  // Analytics proxy routes handled dynamically in main handler
+  
   // Cron jobs
   'POST /api/cron/update-hotness': handleUpdateHotness,
   'POST /api/cron/update-leaderboard': handleUpdateLeaderboard,
@@ -1815,6 +1817,78 @@ async function handleGenerateHomepageOGImage(request: Request, env: Env): Promis
   }
 }
 
+async function handleAnalyticsProxy(request: Request, env: Env): Promise<Response> {
+  try {
+    const url = new URL(request.url);
+    const path = url.pathname.replace('/api/analytics', '');
+    
+    // Build PostHog URL
+    const posthogUrl = `https://us.i.posthog.com${path}${url.search}`;
+    
+    // Forward the request to PostHog
+    const response = await fetch(posthogUrl, {
+      method: request.method,
+      headers: {
+        'Content-Type': 'application/json',
+        'User-Agent': request.headers.get('User-Agent') || 'Firehose-Proxy/1.0',
+      },
+      body: request.method === 'POST' ? await request.text() : undefined,
+    });
+
+    // Get response data
+    const responseData = await response.text();
+    
+    // Return proxied response with CORS headers
+    return new Response(responseData, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: {
+        'Content-Type': response.headers.get('Content-Type') || 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+      },
+    });
+
+  } catch (error) {
+    console.error('Analytics proxy error:', error);
+    return new Response(JSON.stringify({ error: 'Proxy failed' }), {
+      status: 500,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+    });
+  }
+}
+
+async function handleAnalyticsStatic(request: Request, env: Env): Promise<Response> {
+  try {
+    // Proxy PostHog JavaScript library
+    const response = await fetch('https://us-assets.i.posthog.com/static/array.js');
+    const jsContent = await response.text();
+    
+    return new Response(jsContent, {
+      headers: {
+        'Content-Type': 'application/javascript',
+        'Access-Control-Allow-Origin': '*',
+        'Cache-Control': 'public, max-age=86400', // Cache for 24 hours
+      },
+    });
+
+  } catch (error) {
+    console.error('Analytics static proxy error:', error);
+    return new Response('console.error("Failed to load PostHog library");', {
+      status: 200, // Return 200 to avoid breaking the page
+      headers: {
+        'Content-Type': 'application/javascript',
+        'Access-Control-Allow-Origin': '*',
+      },
+    });
+  }
+}
+
 // Main Worker handler
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
@@ -1837,6 +1911,15 @@ export default {
 
     if (method === 'OPTIONS') {
       return new Response(null, { headers: corsHeaders });
+    }
+
+    // Handle analytics proxy routes dynamically (before normal route matching)
+    if (path.startsWith('/api/analytics/')) {
+      if (path === '/api/analytics/static/array.js') {
+        return handleAnalyticsStatic(request, env);
+      } else {
+        return handleAnalyticsProxy(request, env);
+      }
     }
 
     // Route matching
