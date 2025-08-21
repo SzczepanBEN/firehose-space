@@ -1825,18 +1825,37 @@ async function handleAnalyticsProxy(request: Request, env: Env): Promise<Respons
     // Build PostHog URL
     const posthogUrl = `https://us.i.posthog.com${path}${url.search}`;
     
-    // Forward the request to PostHog
+    console.log(`📊 Analytics proxy: ${request.method} ${path} -> ${posthogUrl}`);
+    
+    // Forward the request to PostHog with all original headers
+    const forwardHeaders = new Headers();
+    
+    // Copy important headers from original request
+    ['Content-Type', 'Content-Encoding', 'Accept', 'Accept-Encoding', 'User-Agent'].forEach(headerName => {
+      const value = request.headers.get(headerName);
+      if (value) {
+        forwardHeaders.set(headerName, value);
+      }
+    });
+    
+    // Ensure User-Agent is set
+    if (!forwardHeaders.has('User-Agent')) {
+      forwardHeaders.set('User-Agent', 'Firehose-Proxy/1.0');
+    }
+
     const response = await fetch(posthogUrl, {
       method: request.method,
-      headers: {
-        'Content-Type': 'application/json',
-        'User-Agent': request.headers.get('User-Agent') || 'Firehose-Proxy/1.0',
-      },
-      body: request.method === 'POST' ? await request.text() : undefined,
+      headers: forwardHeaders,
+      body: request.method !== 'GET' && request.method !== 'HEAD' ? await request.arrayBuffer() : undefined,
     });
 
     // Get response data
     const responseData = await response.text();
+    
+    console.log(`📊 PostHog response: ${response.status} ${response.statusText}`);
+    if (response.status >= 400) {
+      console.log(`📊 Error response body: ${responseData}`);
+    }
     
     // Return proxied response with CORS headers
     return new Response(responseData, {
