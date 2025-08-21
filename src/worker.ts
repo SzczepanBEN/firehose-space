@@ -266,6 +266,7 @@ const routes = {
   
   // User routes
   'GET /api/users/:id': handleGetUser,
+  'PUT /api/users/me': handleUpdateUserProfile,
   'GET /api/leaderboard': handleGetLeaderboard,
   
   // Moderation routes
@@ -1224,9 +1225,103 @@ async function handleVoteComment(request: Request, env: Env, params: Record<stri
   }
 }
 
+async function handleUpdateUserProfile(request: Request, env: Env): Promise<Response> {
+  // Authentication check
+  const user = await getCurrentUser(request, env);
+  
+  if (!user) {
+    return new Response(JSON.stringify({ error: 'Authentication required' }), { 
+      status: 401,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+
+  try {
+    const { display_name, bio, website_url, avatar_url } = await request.json();
+    
+    // Validate display name
+    if (!display_name || display_name.trim().length === 0) {
+      return new Response(JSON.stringify({ error: 'Display name is required' }), { 
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    if (display_name.trim().length > 50) {
+      return new Response(JSON.stringify({ error: 'Display name must be 50 characters or less' }), { 
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Validate bio
+    if (bio && bio.length > 500) {
+      return new Response(JSON.stringify({ error: 'Bio must be 500 characters or less' }), { 
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Validate website URL
+    if (website_url && website_url.trim().length > 0) {
+      try {
+        new URL(website_url);
+      } catch {
+        return new Response(JSON.stringify({ error: 'Please provide a valid website URL' }), { 
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+    }
+
+    // Validate avatar URL
+    if (avatar_url && avatar_url.trim().length > 0) {
+      try {
+        new URL(avatar_url);
+      } catch {
+        return new Response(JSON.stringify({ error: 'Please provide a valid avatar URL' }), { 
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+    }
+
+    // Update user profile
+    await env.DB
+      .prepare(`
+        UPDATE users 
+        SET display_name = ?, bio = ?, website_url = ?, avatar_url = ?, updated_at = unixepoch()
+        WHERE id = ?
+      `)
+      .bind(
+        display_name.trim(), 
+        bio ? bio.trim() : null, 
+        website_url ? website_url.trim() : null, 
+        avatar_url ? avatar_url.trim() : null,
+        user.id
+      )
+      .run();
+
+    return new Response(JSON.stringify({ 
+      success: true,
+      message: 'Profile updated successfully'
+    }), {
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+  } catch (error) {
+    console.error('Update profile error:', error);
+    return new Response(JSON.stringify({ error: 'Failed to update profile' }), { 
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+}
+
 async function handleGetUser(request: Request, env: Env, params: Record<string, string>): Promise<Response> {
   try {
     const userId = params.id;
+    const currentUser = await getCurrentUser(request, env);
 
     // Get user basic info
     const user = await env.DB
@@ -1336,6 +1431,7 @@ async function handleGetUser(request: Request, env: Env, params: Record<string, 
 
     const userProfile = {
       ...user,
+      can_edit_profile: currentUser ? currentUser.id === user.id : false,
       stats: stats || {
         post_upvotes: 0,
         comment_upvotes: 0,

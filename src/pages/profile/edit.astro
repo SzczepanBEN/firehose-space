@@ -1,0 +1,383 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+// Dynamic route - disable prerendering for user authentication
+export const prerender = false;
+
+// Default SEO content (will be updated client-side)
+const canonicalUrl = `https://firehose.space/profile/edit`;
+---
+
+<BaseLayout
+  title="Edit Profile - Firehose"
+  description="Edit your profile on Firehose.space"
+  canonicalUrl={canonicalUrl}
+>
+
+  <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    
+    <!-- Loading State -->
+    <div id="loading" class="text-center py-12">
+      <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+      <p class="mt-4 text-gray-600 dark:text-gray-400">Loading profile...</p>
+    </div>
+
+    <!-- Not Authenticated / Error -->
+    <div id="error-state" class="hidden text-center py-12">
+      <div class="mx-auto h-12 w-12 bg-red-500 rounded-full flex items-center justify-center mb-6">
+        <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+        </svg>
+      </div>
+      <h3 id="error-title" class="text-lg font-medium text-gray-900 dark:text-white mb-2">Error</h3>
+      <p id="error-message" class="text-gray-500 dark:text-gray-400 mb-6">Something went wrong</p>
+      <a href="/" class="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-lg font-medium transition-colors">Go Home</a>
+    </div>
+
+    <!-- Edit Form Container -->
+    <div id="edit-container" class="hidden">
+      <!-- Header -->
+      <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+          Edit Profile
+        </h1>
+        <p class="text-gray-600 dark:text-gray-400">
+          Update your profile information. Changes will be visible to other users immediately.
+        </p>
+      </div>
+
+      <!-- Edit Form -->
+      <form id="profile-form" class="space-y-6">
+        
+        <!-- Avatar Preview -->
+        <div class="flex items-center space-x-6">
+          <div class="flex-shrink-0">
+            <img 
+              id="avatar-preview"
+              src="/default-avatar.svg" 
+              alt="Avatar preview"
+              class="w-24 h-24 rounded-full border-4 border-orange-100 dark:border-orange-900"
+            >
+          </div>
+          <div class="flex-1">
+            <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">Profile Picture</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">
+              Provide a URL to an image to use as your avatar.
+            </p>
+          </div>
+        </div>
+
+        <!-- Avatar URL -->
+        <div>
+          <label for="avatar-url" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Avatar URL
+          </label>
+          <input 
+            type="url" 
+            id="avatar-url" 
+            name="avatar-url" 
+            class="block w-full border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-orange-500 focus:border-orange-500 dark:bg-gray-800 dark:text-white"
+            placeholder="https://example.com/your-avatar.jpg"
+          >
+          <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Leave empty to use the default avatar. Supported formats: JPG, PNG, GIF, WebP.
+          </p>
+        </div>
+
+        <!-- Display Name -->
+        <div>
+          <label for="display-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Display Name *
+          </label>
+          <input 
+            type="text" 
+            id="display-name" 
+            name="display-name" 
+            required 
+            maxlength="50"
+            class="block w-full border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-orange-500 focus:border-orange-500 dark:bg-gray-800 dark:text-white"
+            placeholder="Your display name"
+          >
+          <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            <span id="name-count">0</span>/50 characters
+          </p>
+        </div>
+
+        <!-- Bio -->
+        <div>
+          <label for="bio" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Bio
+          </label>
+          <textarea 
+            id="bio" 
+            name="bio" 
+            rows="4"
+            maxlength="500"
+            class="block w-full border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-orange-500 focus:border-orange-500 dark:bg-gray-800 dark:text-white"
+            placeholder="Tell us about yourself..."
+          ></textarea>
+          <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            <span id="bio-count">0</span>/500 characters
+          </p>
+        </div>
+
+        <!-- Website URL -->
+        <div>
+          <label for="website-url" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Website URL
+          </label>
+          <input 
+            type="url" 
+            id="website-url" 
+            name="website-url" 
+            class="block w-full border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-orange-500 focus:border-orange-500 dark:bg-gray-800 dark:text-white"
+            placeholder="https://yourwebsite.com"
+          >
+          <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Your personal website, blog, or portfolio.
+          </p>
+        </div>
+
+        <!-- Submit Buttons -->
+        <div class="flex justify-between pt-6 border-t border-gray-200 dark:border-gray-700">
+          <div>
+            <button 
+              type="button" 
+              id="cancel-edit"
+              class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+          <div>
+            <button 
+              type="submit" 
+              id="save-profile"
+              class="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+            >
+              Save Changes
+            </button>
+          </div>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+<script>
+  let currentUser = null;
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    await loadCurrentUserProfile();
+  });
+
+  async function loadCurrentUserProfile() {
+    try {
+      // Check authentication
+      if (!window.isAuthenticated()) {
+        showError('Authentication Required', 'You must be logged in to edit your profile.');
+        return;
+      }
+
+      const authToken = window.getAuthToken();
+      
+      // Get current user data
+      const response = await fetch('/api/auth/me', {
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem('auth_token');
+          showError('Authentication Required', 'Please log in to edit your profile.');
+        } else {
+          showError('Error', 'Failed to load your profile data.');
+        }
+        return;
+      }
+
+      currentUser = await response.json();
+      populateForm(currentUser);
+
+      // Show edit container
+      document.getElementById('loading').classList.add('hidden');
+      document.getElementById('edit-container').classList.remove('hidden');
+
+      // Setup event listeners
+      setupFormHandlers();
+
+    } catch (error) {
+      console.error('Failed to load current user:', error);
+      showError('Error', 'Failed to load your profile data.');
+    }
+  }
+
+  function showError(title, message) {
+    document.getElementById('loading').classList.add('hidden');
+    document.getElementById('error-title').textContent = title;
+    document.getElementById('error-message').textContent = message;
+    document.getElementById('error-state').classList.remove('hidden');
+  }
+
+  function populateForm(user) {
+    // Avatar
+    const avatarPreview = document.getElementById('avatar-preview');
+    const avatarUrl = document.getElementById('avatar-url');
+    
+    if (user.avatar_url) {
+      avatarUrl.value = user.avatar_url;
+      avatarPreview.src = user.avatar_url;
+    }
+
+    // Display name
+    document.getElementById('display-name').value = user.display_name || '';
+    updateNameCount();
+
+    // Bio (fetch from full profile if we need it)
+    // For now, leave empty as /api/auth/me doesn't include bio
+    updateBioCount();
+
+    // We need to get full profile data for bio and website_url
+    loadFullUserData(user.id);
+  }
+
+  async function loadFullUserData(userId) {
+    try {
+      const authToken = window.getAuthToken();
+      const response = await fetch(`/api/users/${userId}`, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
+
+      if (response.ok) {
+        const fullUser = await response.json();
+        
+        // Update form with full data
+        if (fullUser.bio) {
+          document.getElementById('bio').value = fullUser.bio;
+          updateBioCount();
+        }
+        
+        if (fullUser.website_url) {
+          document.getElementById('website-url').value = fullUser.website_url;
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load full user data:', error);
+    }
+  }
+
+  function setupFormHandlers() {
+    const avatarUrlInput = document.getElementById('avatar-url');
+    const displayNameInput = document.getElementById('display-name');
+    const bioTextarea = document.getElementById('bio');
+    const profileForm = document.getElementById('profile-form');
+    const cancelButton = document.getElementById('cancel-edit');
+
+    // Avatar URL change - update preview
+    avatarUrlInput.addEventListener('input', updateAvatarPreview);
+
+    // Character counts
+    displayNameInput.addEventListener('input', updateNameCount);
+    bioTextarea.addEventListener('input', updateBioCount);
+
+    // Cancel button
+    cancelButton.addEventListener('click', () => {
+      if (currentUser && currentUser.id) {
+        window.location.href = `/u/${currentUser.id}`;
+      } else {
+        window.location.href = '/';
+      }
+    });
+
+    // Form submission
+    profileForm.addEventListener('submit', handleFormSubmit);
+  }
+
+  function updateAvatarPreview() {
+    const avatarUrl = document.getElementById('avatar-url').value;
+    const avatarPreview = document.getElementById('avatar-preview');
+    
+    if (avatarUrl.trim()) {
+      avatarPreview.src = avatarUrl;
+      
+      // Handle image load errors
+      avatarPreview.onerror = function() {
+        avatarPreview.src = '/default-avatar.svg';
+      };
+    } else {
+      avatarPreview.src = '/default-avatar.svg';
+    }
+  }
+
+  function updateNameCount() {
+    const name = document.getElementById('display-name').value;
+    document.getElementById('name-count').textContent = name.length;
+  }
+
+  function updateBioCount() {
+    const bio = document.getElementById('bio').value;
+    document.getElementById('bio-count').textContent = bio.length;
+  }
+
+  async function handleFormSubmit(e) {
+    e.preventDefault();
+
+    const saveButton = document.getElementById('save-profile');
+
+    // Disable submit button
+    saveButton.disabled = true;
+    saveButton.textContent = 'Saving...';
+
+    try {
+      const formData = new FormData(e.target);
+      
+      const updateData = {
+        display_name: formData.get('display-name'),
+        bio: formData.get('bio') || null,
+        website_url: formData.get('website-url') || null,
+        avatar_url: formData.get('avatar-url') || null
+      };
+
+      const authToken = window.getAuthToken();
+      if (!authToken) {
+        throw new Error('Not authenticated');
+      }
+
+      const response = await fetch('/api/users/me', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify(updateData)
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        // Redirect back to profile
+        if (currentUser && currentUser.id) {
+          window.location.href = `/u/${currentUser.id}`;
+        } else {
+          window.location.href = '/';
+        }
+      } else {
+        throw new Error(result.error || 'Failed to update profile');
+      }
+
+    } catch (error) {
+      console.error('Profile update error:', error);
+      alert(error.message || 'Failed to update profile');
+    } finally {
+      // Re-enable submit button
+      saveButton.disabled = false;
+      saveButton.textContent = 'Save Changes';
+    }
+  }
+</script>
+
+</BaseLayout>

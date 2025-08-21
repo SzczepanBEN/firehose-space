@@ -6,310 +6,282 @@ export const prerender = false;
 
 const { id } = Astro.params;
 
-// Mock user data - will be replaced with API call
-const mockUser = {
-  id: 'user1',
-  display_name: 'John Doe',
-  email: 'john@example.com',
-  avatar_url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
-  bio: 'Full-stack developer passionate about web technologies and open source. Building the future one commit at a time.',
-  website_url: 'https://johndoe.dev',
-  created_at: Date.now() - (30 * 24 * 60 * 60 * 1000), // 30 days ago
-  stats: {
-    total_score: 1247,
-    posts_count: 23,
-    comments_count: 156,
-    total_clicks: 2891,
-    post_upvotes: 987,
-    comment_upvotes: 342
-  }
-};
-
-const mockPosts = [
-  {
-    id: '1',
-    type: 'self',
-    title: 'My Journey Building a SaaS: Lessons Learned',
-    slug: 'my-journey-building-a-saas-lessons-learned-post1',
-    score: 67,
-    comments_count: 23,
-    created_at: Date.now() - (3 * 24 * 60 * 60 * 1000) // 3 days ago
-  },
-  {
-    id: '2',
-    type: 'link',
-    title: 'The Future of Web Development: What to Expect in 2024',
-    url: 'https://example.com/web-dev-2024',
-    domain: 'example.com',
-    slug: 'the-future-of-web-development-post2',
-    score: 42,
-    comments_count: 8,
-    clicks: 156,
-    created_at: Date.now() - (7 * 24 * 60 * 60 * 1000) // 7 days ago
-  }
-];
-
-function getTimeAgo(timestamp: number): string {
-  const now = Date.now();
-  const diff = now - timestamp;
-  const days = Math.floor(diff / 86400000);
-  const months = Math.floor(days / 30);
-
-  if (months > 0) return `${months} month${months > 1 ? 's' : ''} ago`;
-  if (days > 0) return `${days} day${days > 1 ? 's' : ''} ago`;
-  return 'Recently';
-}
+// Default SEO content (will be updated client-side)
+const canonicalUrl = `https://firehose.space/u/${id}`;
 ---
 
 <BaseLayout 
-  title={`${mockUser.display_name} - Firehose Author`}
-  description={`Profile of ${mockUser.display_name} on Firehose.space. ${mockUser.bio || 'Community member and content creator.'}`}
-  canonicalUrl={`https://firehose.space/u/${id}`}
+  title="User Profile - Firehose"
+  description="User profile on Firehose.space"
+  canonicalUrl={canonicalUrl}
 >
   <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     
-    <!-- User Profile Header -->
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-8">
-      <div class="p-8">
-        <div class="flex items-start space-x-6">
-          
-          <!-- Avatar -->
-          <div class="flex-shrink-0">
-            <img 
-              src={mockUser.avatar_url || '/default-avatar.svg'} 
-              alt={mockUser.display_name}
-              class="w-24 h-24 rounded-full border-4 border-orange-100 dark:border-orange-900"
-            >
-          </div>
-
-          <!-- User Info -->
-          <div class="flex-1 min-w-0">
-            <div class="flex items-center space-x-3 mb-3">
-              <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
-                {mockUser.display_name}
-              </h1>
-              
-              <!-- User badges based on rank/score -->
-              {mockUser.stats.total_score > 1000 && (
-                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
-                  ⭐ Top Contributor
-                </span>
-              )}
-            </div>
-
-            {mockUser.bio && (
-              <p class="text-gray-600 dark:text-gray-400 text-lg mb-4 leading-relaxed">
-                {mockUser.bio}
-              </p>
-            )}
-
-            <!-- User Links and Info -->
-            <div class="flex flex-wrap items-center gap-4 text-sm text-gray-500 dark:text-gray-400 mb-4">
-              {mockUser.website_url && (
-                <a 
-                  href={mockUser.website_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="flex items-center space-x-1 hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
-                >
-                  <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" clip-rule="evenodd"></path>
-                  </svg>
-                  <span>{new URL(mockUser.website_url).hostname}</span>
-                </a>
-              )}
-              
-              <span class="flex items-center space-x-1">
-                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path>
-                </svg>
-                <span>Joined {getTimeAgo(mockUser.created_at)}</span>
-              </span>
-            </div>
-
-            <!-- User Statistics -->
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-              <div class="text-center">
-                <div class="text-2xl font-bold text-orange-600 dark:text-orange-400">
-                  {Math.floor(mockUser.stats.total_score)}
-                </div>
-                <div class="text-sm text-gray-500 dark:text-gray-400">Total Score</div>
-              </div>
-              
-              <div class="text-center">
-                <div class="text-2xl font-bold text-gray-900 dark:text-white">
-                  {mockUser.stats.posts_count}
-                </div>
-                <div class="text-sm text-gray-500 dark:text-gray-400">Posts</div>
-              </div>
-              
-              <div class="text-center">
-                <div class="text-2xl font-bold text-gray-900 dark:text-white">
-                  {mockUser.stats.comments_count}
-                </div>
-                <div class="text-sm text-gray-500 dark:text-gray-400">Comments</div>
-              </div>
-              
-              <div class="text-center">
-                <div class="text-2xl font-bold text-gray-900 dark:text-white">
-                  {mockUser.stats.total_clicks}
-                </div>
-                <div class="text-sm text-gray-500 dark:text-gray-400">Clicks Generated</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+    <!-- Loading State -->
+    <div id="loading" class="text-center py-12">
+      <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+      <p class="mt-4 text-gray-600 dark:text-gray-400">Loading profile...</p>
     </div>
 
-    <!-- User's Posts -->
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-      <div class="p-6 border-b border-gray-200 dark:border-gray-700">
-        <div class="flex items-center justify-between">
-          <h2 class="text-xl font-bold text-gray-900 dark:text-white">
-            Recent Posts ({mockUser.stats.posts_count})
-          </h2>
-          
-          <!-- Sort options -->
-          <div class="flex items-center space-x-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
-            <button class="px-3 py-1 rounded-md text-sm font-medium bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300">
-              Recent
-            </button>
-            <button class="px-3 py-1 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600">
-              Top
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Posts List -->
-      <div id="user-posts-container" class="divide-y divide-gray-200 dark:divide-gray-700">
-        {mockPosts.map((post) => (
-          <div class="p-6">
-            <div class="flex items-start space-x-4">
-              
-              <!-- Post Score -->
-              <div class="flex-shrink-0 text-center">
-                <div class="text-lg font-bold text-orange-600 dark:text-orange-400">
-                  {post.score}
-                </div>
-                <div class="text-xs text-gray-500 dark:text-gray-400">upvotes</div>
-              </div>
-
-              <!-- Post Content -->
-              <div class="flex-1 min-w-0">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                  <a 
-                    href={`/p/${post.slug}`}
-                    class="hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
-                  >
-                    {post.title}
-                  </a>
-                </h3>
-
-                {post.domain && (
-                  <div class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400 mb-2">
-                    <span>({post.domain})</span>
-                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd"></path>
-                    </svg>
-                  </div>
-                )}
-
-                <div class="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
-                  <span>{getTimeAgo(post.created_at)}</span>
-                  
-                  <a 
-                    href={`/p/${post.slug}#comments`}
-                    class="flex items-center space-x-1 hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
-                  >
-                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clip-rule="evenodd"></path>
-                    </svg>
-                    <span>{post.comments_count} comments</span>
-                  </a>
-
-                  {post.clicks && (
-                    <span>{post.clicks} clicks</span>
-                  )}
-
-                  {post.type === 'self' && (
-                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                      Self Post
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <!-- Load More -->
-      <div class="p-6 border-t border-gray-200 dark:border-gray-700 text-center">
-        <button 
-          id="load-more-posts-btn"
-          class="text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-500 text-sm font-medium"
-        >
-          Load more posts
-        </button>
-      </div>
-    </div>
-
-    <!-- Back to Leaderboard -->
-    <div class="mt-8 text-center">
-      <a 
-        href="/leaderboard" 
-        class="inline-flex items-center space-x-2 text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-500 text-sm font-medium"
-      >
-        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-          <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd"></path>
+    <!-- Error State -->
+    <div id="error-state" class="hidden text-center py-12">
+      <div class="mx-auto h-12 w-12 bg-red-500 rounded-full flex items-center justify-center mb-6">
+        <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
         </svg>
-        <span>Back to Leaderboard</span>
-      </a>
+      </div>
+      <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">User Not Found</h3>
+      <p class="text-gray-500 dark:text-gray-400 mb-6">The user profile you're looking for doesn't exist.</p>
+      <a href="/" class="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-lg font-medium transition-colors">Go Home</a>
+    </div>
+
+    <!-- Profile Content (populated by JavaScript) -->
+    <div id="profile-content" class="hidden">
+      <!-- Dynamic content will be inserted here -->
     </div>
   </div>
 </BaseLayout>
 
 <script define:vars={{ userId: id }}>
-  document.addEventListener('DOMContentLoaded', () => {
-    // Load real user data when API is ready
-    // loadUserProfile(userId);
-    // loadUserPosts(userId);
+  document.addEventListener('DOMContentLoaded', async () => {
+    await loadUserProfile(userId);
   });
 
-  // TODO: Implement real data loading
   async function loadUserProfile(userId) {
     try {
-      const response = await fetch(`/api/users/${userId}`);
+      // Add auth header if user is logged in
+      const headers = {};
+      const authToken = window.getAuthToken();
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+
+      const response = await fetch(`/api/users/${userId}`, { headers });
+      
       if (response.ok) {
         const user = await response.json();
-        // Update page with real user data
         updateUserProfile(user);
+        
+        // Update page title
+        document.title = `${user.display_name} - Firehose Author`;
+      } else if (response.status === 404) {
+        showError();
+      } else {
+        throw new Error('Failed to load profile');
       }
     } catch (error) {
       console.error('Failed to load user profile:', error);
+      showError();
     }
   }
 
-  async function loadUserPosts(userId, sort = 'recent') {
-    try {
-      const response = await fetch(`/api/users/${userId}/posts?sort=${sort}`);
-      if (response.ok) {
-        const data = await response.json();
-        // Update posts list with real data
-        updateUserPosts(data.posts);
-      }
-    } catch (error) {
-      console.error('Failed to load user posts:', error);
-    }
+  function showError() {
+    document.getElementById('loading').classList.add('hidden');
+    document.getElementById('error-state').classList.remove('hidden');
   }
 
   function updateUserProfile(user) {
-    // Update DOM with real user data
+    const profileContent = `
+      <!-- User Profile Header -->
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-8">
+        <div class="p-8">
+          <div class="flex items-start space-x-6">
+            
+            <!-- Avatar -->
+            <div class="flex-shrink-0">
+              <img 
+                src="${user.avatar_url || '/default-avatar.svg'}" 
+                alt="${user.display_name}"
+                class="w-24 h-24 rounded-full border-4 border-orange-100 dark:border-orange-900"
+              >
+            </div>
+
+            <!-- User Info -->
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center space-x-3">
+                  <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
+                    ${user.display_name}
+                  </h1>
+                  
+                  <!-- User badges based on rank/score -->
+                  ${user.stats.total_score > 1000 ? `
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                      ⭐ Top Contributor
+                    </span>
+                  ` : ''}
+                </div>
+                
+                <!-- Edit Profile Button -->
+                ${user.can_edit_profile ? `
+                  <a href="/profile/edit" class="inline-flex items-center space-x-2 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path>
+                    </svg>
+                    <span>Edit Profile</span>
+                  </a>
+                ` : ''}
+              </div>
+
+              ${user.bio ? `
+                <p class="text-gray-600 dark:text-gray-400 text-lg mb-4 leading-relaxed">
+                  ${user.bio}
+                </p>
+              ` : ''}
+
+              <!-- User Links and Info -->
+              <div class="flex flex-wrap items-center gap-4 text-sm text-gray-500 dark:text-gray-400 mb-4">
+                ${user.website_url ? `
+                  <a 
+                    href="${user.website_url}"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="flex items-center space-x-1 hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
+                  >
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" clip-rule="evenodd"></path>
+                    </svg>
+                    <span>${new URL(user.website_url).hostname}</span>
+                  </a>
+                ` : ''}
+                
+                <span class="flex items-center space-x-1">
+                  <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path>
+                  </svg>
+                  <span>Joined ${getTimeAgo(user.created_at * 1000)}</span>
+                </span>
+              </div>
+
+              <!-- User Statistics -->
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <div class="text-center">
+                  <div class="text-2xl font-bold text-orange-600 dark:text-orange-400">
+                    ${Math.floor(user.stats.total_score)}
+                  </div>
+                  <div class="text-sm text-gray-500 dark:text-gray-400">Total Score</div>
+                </div>
+                
+                <div class="text-center">
+                  <div class="text-2xl font-bold text-gray-900 dark:text-white">
+                    ${user.stats.posts_count}
+                  </div>
+                  <div class="text-sm text-gray-500 dark:text-gray-400">Posts</div>
+                </div>
+                
+                <div class="text-center">
+                  <div class="text-2xl font-bold text-gray-900 dark:text-white">
+                    ${user.stats.comment_upvotes}
+                  </div>
+                  <div class="text-sm text-gray-500 dark:text-gray-400">Comment Upvotes</div>
+                </div>
+                
+                <div class="text-center">
+                  <div class="text-2xl font-bold text-gray-900 dark:text-white">
+                    ${user.stats.total_clicks}
+                  </div>
+                  <div class="text-sm text-gray-500 dark:text-gray-400">Clicks Generated</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- User's Posts -->
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+        <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+          <h2 class="text-xl font-bold text-gray-900 dark:text-white">
+            Recent Posts (${user.stats.posts_count})
+          </h2>
+        </div>
+
+        <!-- Posts List -->
+        <div class="divide-y divide-gray-200 dark:divide-gray-700">
+          ${user.recent_posts.map(post => `
+            <div class="p-6">
+              <div class="flex items-start space-x-4">
+                
+                <!-- Post Score -->
+                <div class="flex-shrink-0 text-center">
+                  <div class="text-lg font-bold text-orange-600 dark:text-orange-400">
+                    ${post.score}
+                  </div>
+                  <div class="text-xs text-gray-500 dark:text-gray-400">upvotes</div>
+                </div>
+
+                <!-- Post Content -->
+                <div class="flex-1 min-w-0">
+                  <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                    <a 
+                      href="/p/${post.slug}"
+                      class="hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
+                    >
+                      ${post.title}
+                    </a>
+                  </h3>
+
+                  ${post.domain ? `
+                    <div class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400 mb-2">
+                      <span>(${post.domain})</span>
+                      <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                      </svg>
+                    </div>
+                  ` : ''}
+
+                  <div class="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
+                    <span>${getTimeAgo(post.created_at * 1000)}</span>
+                    
+                    ${post.clicks ? `<span>${post.clicks} clicks</span>` : ''}
+
+                    ${post.type === 'self' ? `
+                      <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                        Self Post
+                      </span>
+                    ` : ''}
+                  </div>
+                </div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+
+        ${user.recent_posts.length === 0 ? `
+          <div class="p-6 text-center text-gray-500 dark:text-gray-400">
+            No posts yet.
+          </div>
+        ` : ''}
+      </div>
+
+      <!-- Back to Leaderboard -->
+      <div class="mt-8 text-center">
+        <a 
+          href="/leaderboard" 
+          class="inline-flex items-center space-x-2 text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-500 text-sm font-medium"
+        >
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd"></path>
+          </svg>
+          <span>Back to Leaderboard</span>
+        </a>
+      </div>
+    `;
+
+    // Show profile content
+    document.getElementById('loading').classList.add('hidden');
+    document.getElementById('profile-content').innerHTML = profileContent;
+    document.getElementById('profile-content').classList.remove('hidden');
   }
 
-  function updateUserPosts(posts) {
-    // Update DOM with real posts data
+  function getTimeAgo(timestamp) {
+    const now = Date.now();
+    const diff = now - timestamp;
+    const days = Math.floor(diff / 86400000);
+    const months = Math.floor(days / 30);
+
+    if (months > 0) return `${months} month${months > 1 ? 's' : ''} ago`;
+    if (days > 0) return `${days} day${days > 1 ? 's' : ''} ago`;
+    return 'recently';
   }
 </script>
