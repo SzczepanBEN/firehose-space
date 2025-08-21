@@ -6,16 +6,61 @@ export const prerender = false;
 
 const { slug } = Astro.params;
 
-// Default SEO content (will be updated client-side)
+// Fetch post data for meta tags
+let post = null;
+let pageTitle = 'Post - Firehose';
+let pageDescription = 'Read and discuss this post on Firehose';
+let pageOgImage = `https://firehose.space/api/og/post/${slug}`;
+
+try {
+  // Make internal API call to get post data
+  const workerUrl = 'https://firehose.space/api/posts/' + slug;
+  const response = await fetch(workerUrl);
+  
+  if (response.ok) {
+    post = await response.json();
+    
+    // Set dynamic meta content
+    pageTitle = `${post.title} - Firehose`;
+    
+    // Extract first paragraph for description (limit to 160 chars)
+    let description = post.title; // Fallback to title
+    if (post.type === 'self' && post.body_markdown) {
+      // Extract first paragraph from markdown
+      const firstParagraph = post.body_markdown
+        .split('\n')
+        .find(line => line.trim().length > 0 && !line.startsWith('#'))
+        ?.replace(/\*\*([^*]+)\*\*/g, '$1') // Remove bold markers
+        .replace(/\*([^*]+)\*/g, '$1')     // Remove italic markers
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Remove link markers
+        .trim();
+      
+      if (firstParagraph && firstParagraph.length > 20) {
+        description = firstParagraph.length > 160 
+          ? firstParagraph.substring(0, 157) + '...'
+          : firstParagraph;
+      }
+    }
+    pageDescription = description;
+    
+    // Use post image if available
+    if (post.image_url) {
+      pageOgImage = post.image_url;
+    }
+  }
+} catch (error) {
+  console.error('Failed to fetch post for meta tags:', error);
+  // Use defaults
+}
+
 const canonicalUrl = `https://firehose.space/p/${slug}`;
-const ogImage = `https://firehose.space/api/og/post/${slug}`;
 ---
 
 <BaseLayout 
-  title="Post - Firehose"
-  description="Read and discuss this post on Firehose"
+  title={pageTitle}
+  description={pageDescription}
   canonicalUrl={canonicalUrl}
-  ogImage={ogImage}
+  ogImage={pageOgImage}
 >
   
   <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

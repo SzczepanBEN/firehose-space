@@ -19,6 +19,7 @@ try {
       title: 'Building the future of web development',
       url: 'https://example.com/article',
       domain: 'example.com',
+      author_id: 'user1',
       author_display_name: 'John Doe',
       author_avatar_url: null,
       score: 42,
@@ -32,6 +33,7 @@ try {
       title: 'My thoughts on the current state of AI',
       url: null,
       domain: null,
+      author_id: 'user2',
       author_display_name: 'Jane Smith',
       author_avatar_url: null,
       score: 28,
@@ -171,7 +173,7 @@ function getTimeAgo(timestamp: number): string {
                       alt={post.author_display_name}
                       class="w-5 h-5 rounded-full"
                     >
-                    <span>by <strong>{post.author_display_name}</strong></span>
+                    <span>by <a href={`/u/${post.author_id}`} class="font-medium text-gray-900 dark:text-white hover:text-orange-600 dark:hover:text-orange-400 transition-colors">{post.author_display_name}</a></span>
                   </div>
                   
                   <span>{getTimeAgo(post.created_at)}</span>
@@ -343,7 +345,7 @@ function getTimeAgo(timestamp: number): string {
               <div class="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
                 <div class="flex items-center space-x-1">
                   <img src="${post.author_avatar_url || '/default-avatar.svg'}" alt="${post.author_display_name}" class="w-5 h-5 rounded-full">
-                  <span>by <strong>${post.author_display_name}</strong></span>
+                  <span>by <a href="/u/${post.author_id}" class="font-medium text-gray-900 dark:text-white hover:text-orange-600 dark:hover:text-orange-400 transition-colors">${post.author_display_name}</a></span>
                 </div>
                 
                 <span>${getTimeAgo(post.created_at)}</span>
