@@ -1,0 +1,198 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const canonicalUrl = 'https://firehose.space/privacy';
+---
+
+<BaseLayout 
+  title="Privacy Policy - Firehose"
+  description="Privacy Policy for Firehose.space - how we handle your personal information"
+  canonicalUrl={canonicalUrl}
+  noIndex={true}
+>
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    
+    <!-- Header -->
+    <div class="text-center mb-12">
+      <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-4">
+        Privacy Policy
+      </h1>
+      <p class="text-lg text-gray-600 dark:text-gray-400">
+        Last updated: August 21, 2025
+      </p>
+    </div>
+
+    <!-- Content -->
+    <div class="prose prose-lg dark:prose-invert max-w-none">
+      
+      <p class="text-lg leading-relaxed mb-8">
+        At <strong>firehose.space</strong> ("we", "us", or "our"), we respect your privacy and are committed to protecting your personal information. This Privacy Policy explains how we collect, use, and safeguard your data when you use our service.
+      </p>
+
+      <hr class="my-8 border-gray-300 dark:border-gray-600">
+
+      <h2 id="information-we-collect">1. Information We Collect</h2>
+      
+      <h3>Personal Information</h3>
+      <ul>
+        <li><strong>Email Address:</strong> Required for account creation and magic link authentication</li>
+        <li><strong>Display Name:</strong> Public username you choose for your profile</li>
+        <li><strong>Profile Information:</strong> Optional bio, website URL, and avatar URL you provide</li>
+      </ul>
+
+      <h3>Content Data</h3>
+      <ul>
+        <li><strong>Posts:</strong> Links and articles you submit to the platform</li>
+        <li><strong>Comments:</strong> Your comments on posts</li>
+        <li><strong>Votes:</strong> Your upvotes and downvotes on content</li>
+      </ul>
+
+      <h3>Technical Data</h3>
+      <ul>
+        <li><strong>IP Address:</strong> For rate limiting and security purposes</li>
+        <li><strong>Browser Information:</strong> Basic technical data for compatibility</li>
+        <li><strong>Usage Analytics:</strong> Aggregated data about how you use our service</li>
+      </ul>
+
+      <hr class="my-8 border-gray-300 dark:border-gray-600">
+
+      <h2 id="how-we-use-information">2. How We Use Your Information</h2>
+      <ul>
+        <li><strong>Provide the Service:</strong> Enable posting, commenting, voting, and profile features</li>
+        <li><strong>Authentication:</strong> Send magic login links to your email address</li>
+        <li><strong>Rate Limiting:</strong> Prevent spam and abuse of our platform</li>
+        <li><strong>Improve Our Service:</strong> Analyze usage patterns to enhance user experience</li>
+        <li><strong>Legal Compliance:</strong> Respond to legal requests and prevent illegal activity</li>
+      </ul>
+
+      <hr class="my-8 border-gray-300 dark:border-gray-600">
+
+      <h2 id="data-sharing">3. How We Share Your Information</h2>
+      
+      <h3>Public Information</h3>
+      <p>The following information is public by default:</p>
+      <ul>
+        <li>Your display name, bio, website, and avatar</li>
+        <li>Posts you submit (titles, links, content)</li>
+        <li>Comments you make</li>
+        <li>Your author score and ranking</li>
+      </ul>
+
+      <h3>Private Information</h3>
+      <p>We do <strong>NOT</strong> share the following:</p>
+      <ul>
+        <li>Your email address</li>
+        <li>Your IP address</li>
+        <li>Your individual voting history</li>
+        <li>Any private messages or personal data</li>
+      </ul>
+
+      <h3>Third-Party Services</h3>
+      <p>We use trusted third-party services:</p>
+      <ul>
+        <li><strong>Cloudflare:</strong> Hosting, CDN, and security services</li>
+        <li><strong>Resend:</strong> Email delivery for magic links</li>
+      </ul>
+
+      <hr class="my-8 border-gray-300 dark:border-gray-600">
+
+      <h2 id="data-retention">4. Data Retention</h2>
+      <ul>
+        <li><strong>Account Data:</strong> Retained while your account is active</li>
+        <li><strong>Posts & Comments:</strong> Retained indefinitely as public content</li>
+        <li><strong>Login Tokens:</strong> Expire after 15 minutes</li>
+        <li><strong>Rate Limiting Data:</strong> Cleared after 24-48 hours</li>
+      </ul>
+
+      <hr class="my-8 border-gray-300 dark:border-gray-600">
+
+      <h2 id="your-rights">5. Your Rights</h2>
+      <ul>
+        <li><strong>Access:</strong> View your personal data we store</li>
+        <li><strong>Update:</strong> Edit your profile information anytime</li>
+        <li><strong>Delete:</strong> Request account deletion (contact us)</li>
+        <li><strong>Export:</strong> Download your posts and comments</li>
+      </ul>
+
+      <hr class="my-8 border-gray-300 dark:border-gray-600">
+
+      <h2 id="security">6. Security</h2>
+      <p>We implement industry-standard security measures:</p>
+      <ul>
+        <li>HTTPS encryption for all data transmission</li>
+        <li>Secure authentication via magic links (no passwords stored)</li>
+        <li>Rate limiting to prevent abuse</li>
+        <li>Regular security updates and monitoring</li>
+      </ul>
+
+      <hr class="my-8 border-gray-300 dark:border-gray-600">
+
+      <h2 id="cookies">7. Cookies and Tracking</h2>
+      <p>We use minimal tracking:</p>
+      <ul>
+        <li><strong>Authentication:</strong> JWT tokens stored in localStorage</li>
+        <li><strong>No Third-Party Cookies:</strong> We don't use advertising or analytics cookies</li>
+        <li><strong>Local Storage:</strong> Only for authentication state</li>
+      </ul>
+
+      <hr class="my-8 border-gray-300 dark:border-gray-600">
+
+      <h2 id="international-users">8. International Users</h2>
+      <p>Our servers are located in the United States. By using our service, you consent to your data being processed in the US, which may have different privacy laws than your jurisdiction.</p>
+
+      <hr class="my-8 border-gray-300 dark:border-gray-600">
+
+      <h2 id="changes-to-policy">9. Changes to This Policy</h2>
+      <p>We may update this Privacy Policy from time to time. Changes will be posted on this page with an updated "Last updated" date. Continued use of our service constitutes acceptance of any changes.</p>
+
+      <hr class="my-8 border-gray-300 dark:border-gray-600">
+
+      <h2 id="contact-us">10. Contact Us</h2>
+      <p>If you have questions about this Privacy Policy or want to exercise your rights, please contact us at:<br>
+      📧 <a href="mailto:contact@firehose.space" class="text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-500">contact@firehose.space</a></p>
+
+      <hr class="my-12 border-gray-300 dark:border-gray-600">
+
+      <!-- Back to Home -->
+      <div class="text-center pt-8">
+        <a 
+          href="/" 
+          class="inline-flex items-center space-x-2 bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+        >
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clip-rule="evenodd"></path>
+          </svg>
+          <span>Back to Firehose</span>
+        </a>
+      </div>
+
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  /* Custom styles for Privacy page */
+  .prose h2 {
+    @apply text-2xl font-bold text-gray-900 dark:text-white mt-8 mb-4;
+  }
+  
+  .prose h3 {
+    @apply text-xl font-semibold text-gray-900 dark:text-white mt-6 mb-3;
+  }
+  
+  .prose ul {
+    @apply space-y-2;
+  }
+  
+  .prose li {
+    @apply text-gray-700 dark:text-gray-300;
+  }
+  
+  .prose strong {
+    @apply text-gray-900 dark:text-white;
+  }
+  
+  .prose p {
+    @apply text-gray-700 dark:text-gray-300 leading-relaxed;
+  }
+</style>
