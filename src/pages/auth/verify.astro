@@ -39,6 +39,15 @@
       .then(response => response.json())
       .then(data => {
         if (data.success && data.token) {
+          // 📊 Analytics: Track successful magic link verification
+          if (typeof window.analytics !== 'undefined') {
+            window.analytics.track('Magic Link Verified', {
+              user_id: data.user?.id,
+              is_new_user: data.is_new_user || false,
+              timestamp: new Date().toISOString()
+            });
+          }
+
           // Store token in localStorage for frontend
           localStorage.setItem('auth_token', data.token);
           // Redirect to homepage

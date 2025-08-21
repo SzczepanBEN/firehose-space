@@ -164,6 +164,14 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         const result = await response.json();
 
         if (response.ok) {
+          // 📊 Analytics: Track magic link sent
+          if (typeof window.analytics !== 'undefined') {
+            window.analytics.track('Magic Link Sent', {
+              email_domain: email.split('@')[1],
+              timestamp: new Date().toISOString()
+            });
+          }
+
           showMessage('success', 
             `Magic link sent to ${email}! Check your email and click the link to sign in. The link expires in 15 minutes.`
           );

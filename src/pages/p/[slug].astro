@@ -224,6 +224,18 @@ const canonicalUrl = `https://firehose.space/p/${slug}`;
       document.getElementById('loading').classList.add('hidden');
       document.getElementById('post-content').classList.remove('hidden');
       
+      // 📊 Analytics: Track article view
+      if (typeof window.analytics !== 'undefined') {
+        window.analytics.track('Article Viewed', {
+          post_id: post.id,
+          post_type: post.type,
+          author_id: post.author_id,
+          post_slug: slug,
+          has_image: !!post.image_url,
+          reading_time_estimate: Math.ceil((post.body_markdown?.length || post.title.length) / 1000) // rough estimate
+        });
+      }
+      
       // Setup vote handlers
       setupVoteHandlers();
       

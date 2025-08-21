@@ -408,6 +408,18 @@ your code here
         const result = await response.json();
 
         if (response.ok) {
+          // 📊 Analytics: Track successful post submission
+          if (typeof window.analytics !== 'undefined') {
+            window.analytics.track('Post Submitted', {
+              post_type: submitData.type,
+              post_id: result.id,
+              post_slug: result.slug,
+              has_image: !!submitData.image_url,
+              title_length: submitData.title?.length || 0,
+              content_length: submitData.content?.length || 0
+            });
+          }
+
           showMessage('success', 'Post submitted successfully! Redirecting...');
           setTimeout(() => {
             window.location.href = `/p/${result.slug}`;
@@ -422,6 +434,17 @@ your code here
 
       } catch (error) {
         console.error('Submit error:', error);
+        
+        // 📊 Analytics: Track failed post submission
+        if (typeof window.analytics !== 'undefined') {
+          window.analytics.track('Post Submit Failed', {
+            error_message: error.message,
+            post_type: submitData?.type,
+            title_length: submitData?.title?.length || 0,
+            has_image: !!submitData?.image_url
+          });
+        }
+        
         showMessage('error', error.message || 'Failed to submit post. Please try again.');
         
         submitBtn.disabled = false;

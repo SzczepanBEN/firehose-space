@@ -280,7 +280,19 @@ function getTimeAgo(timestamp: number): string {
     // Extract and display thumbnails for all posts
     posts.forEach(post => extractAndDisplayThumbnail(post));
     
+    // 📊 Analytics: Track feed view
+    if (typeof window.analytics !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const sortType = urlParams.get('sort') || 'new';
+      window.analytics.track('Feed Viewed', {
+        sort_type: sortType,
+        posts_count: posts.length,
+        page_url: window.location.pathname + window.location.search
+      });
+    }
+    
     setupVoteHandlers();
+    setupPostClickTracking();
   }
 
   function appendPosts(posts) {
@@ -294,6 +306,7 @@ function getTimeAgo(timestamp: number): string {
     posts.forEach(post => extractAndDisplayThumbnail(post));
     
     setupVoteHandlers();
+    setupPostClickTracking();
   }
 
   function createPostHTML(post) {
@@ -407,6 +420,15 @@ function getTimeAgo(timestamp: number): string {
             
             // Update button states
             updateVoteButtonStates(postId, voteType);
+
+            // 📊 Analytics: Track vote
+            if (typeof window.analytics !== 'undefined') {
+              window.analytics.track('Post Voted', {
+                post_id: postId,
+                vote_type: voteType,
+                new_score: result.new_score
+              });
+            }
           } else if (response.status === 401) {
             localStorage.removeItem('auth_token');
             window.location.href = '/login';
@@ -502,5 +524,48 @@ function getTimeAgo(timestamp: number): string {
         };
       }
     }
+  }
+
+  function setupPostClickTracking() {
+    // Track post title clicks (article views)
+    document.querySelectorAll('a[href^="/p/"]').forEach(link => {
+      link.addEventListener('click', (e) => {
+        const postId = link.closest('article')?.querySelector('[data-post-id]')?.dataset.postId;
+        const href = link.getAttribute('href');
+        
+        if (typeof window.analytics !== 'undefined' && postId) {
+          window.analytics.track('Post Clicked', {
+            post_id: postId,
+            post_url: href,
+            source: 'feed'
+          });
+        }
+      });
+    });
+
+    // Track external link clicks
+    document.querySelectorAll('a[href^="http"]:not([href*="firehose.space"])').forEach(link => {
+      link.addEventListener('click', (e) => {
+        if (typeof window.analytics !== 'undefined') {
+          window.analytics.track('External Link Clicked', {
+            url: link.href,
+            domain: new URL(link.href).hostname,
+            source: 'feed'
+          });
+        }
+      });
+    });
+
+    // Track author profile clicks
+    document.querySelectorAll('a[href^="/u/"]').forEach(link => {
+      link.addEventListener('click', (e) => {
+        if (typeof window.analytics !== 'undefined') {
+          window.analytics.track('Author Profile Clicked', {
+            author_id: link.getAttribute('href').replace('/u/', ''),
+            source: 'feed'
+          });
+        }
+      });
+    });
   }
 </script>

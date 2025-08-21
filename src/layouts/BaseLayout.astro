@@ -1,4 +1,6 @@
 ---
+import PostHog from '../components/posthog.astro';
+
 export interface Props {
   title: string;
   description?: string;
@@ -54,6 +56,9 @@ const defaultOgImage = title === "Firehose" ? `${siteUrl}/api/og/homepage` : `${
   
   <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- PostHog Analytics -->
+  <PostHog />
   
   <!-- Schema.org structured data -->
   <script type="application/ld+json">
@@ -267,6 +272,15 @@ const defaultOgImage = title === "Firehose" ? `${siteUrl}/api/og/homepage` : `${
         userAvatar.src = authState.user.avatar_url || '/default-avatar.svg';
         userName.textContent = authState.user.display_name;
         userProfileLink.href = `/u/${authState.user.id}`;
+
+        // 📊 Analytics: Identify user
+        if (typeof window.analytics !== 'undefined') {
+          window.analytics.identify(authState.user.id, {
+            display_name: authState.user.display_name,
+            email: authState.user.email,
+            avatar_url: authState.user.avatar_url
+          });
+        }
       } else {
         authButtons.classList.remove('hidden');
         userMenu.classList.add('hidden');
@@ -296,6 +310,13 @@ const defaultOgImage = title === "Firehose" ? `${siteUrl}/api/og/homepage` : `${
     // Logout handler
     document.getElementById('logout-btn')?.addEventListener('click', async () => {
       try {
+        // 📊 Analytics: Track logout
+        if (typeof window.analytics !== 'undefined') {
+          window.analytics.track('User Logout', {
+            user_id: authState.user?.id
+          });
+        }
+
         // Clear local storage
         localStorage.removeItem('auth_token');
         
