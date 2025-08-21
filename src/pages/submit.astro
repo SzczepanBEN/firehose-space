@@ -47,6 +47,33 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       </div>
     </div>
 
+    <!-- Rate Limit Timer (shown when user can't post yet) -->
+    <div id="rate-limit-timer" class="hidden mb-8">
+      <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 text-center">
+        <div class="mx-auto h-12 w-12 bg-red-500 rounded-full flex items-center justify-center mb-4">
+          <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+          </svg>
+        </div>
+        
+        <h3 class="text-lg font-semibold text-red-900 dark:text-red-200 mb-2">
+          Daily Limit Reached
+        </h3>
+        
+        <p class="text-red-800 dark:text-red-300 mb-4">
+          You can submit one post per day. Your next post will be available in:
+        </p>
+        
+        <div class="text-2xl font-mono font-bold text-red-900 dark:text-red-200 mb-4">
+          <span id="timer-hours">00</span>:<span id="timer-minutes">00</span>:<span id="timer-seconds">00</span>
+        </div>
+        
+        <p class="text-sm text-red-700 dark:text-red-400">
+          Next post available at <span id="next-post-time" class="font-medium"></span>
+        </p>
+      </div>
+    </div>
+
     <!-- Submission Form -->
     <form id="submit-form" class="space-y-6 hidden">
       
@@ -249,14 +276,24 @@ your code here
     
     const form = document.getElementById('submit-form');
     const notAuthenticatedDiv = document.getElementById('not-authenticated');
+    const rateLimitTimer = document.getElementById('rate-limit-timer');
     
     if (!isAuthenticated) {
       notAuthenticatedDiv.classList.remove('hidden');
       return;
     }
     
-    // Show form if authenticated
-    form.classList.remove('hidden');
+    // Check rate limit status
+    const rateLimitStatus = await checkRateLimitStatus();
+    
+    if (rateLimitStatus && !rateLimitStatus.can_post) {
+      // Show timer, hide form
+      rateLimitTimer.classList.remove('hidden');
+      startCountdown(rateLimitStatus.time_remaining, rateLimitStatus.next_post_at);
+    } else {
+      // Show form if authenticated and can post
+      form.classList.remove('hidden');
+    }
     
     const typeRadios = document.querySelectorAll('input[name="post-type"]');
     const urlField = document.getElementById('url-field');
@@ -419,5 +456,56 @@ your code here
       console.error('Auth check failed:', error);
       return false;
     }
+  }
+
+  async function checkRateLimitStatus() {
+    try {
+      const authToken = localStorage.getItem('auth_token');
+      if (!authToken) return null;
+      
+      const response = await fetch('/api/posts/rate-limit-status', {
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
+      
+      if (response.ok) {
+        return await response.json();
+      }
+      return null;
+    } catch (error) {
+      console.error('Rate limit status check failed:', error);
+      return null;
+    }
+  }
+
+  function startCountdown(initialTimeRemaining, nextPostTimestamp) {
+    let timeRemaining = initialTimeRemaining;
+    
+    // Set the next post time display
+    const nextPostTime = new Date(nextPostTimestamp * 1000);
+    document.getElementById('next-post-time').textContent = nextPostTime.toLocaleString();
+    
+    function updateTimer() {
+      if (timeRemaining <= 0) {
+        // Time's up! Hide timer, show form
+        document.getElementById('rate-limit-timer').classList.add('hidden');
+        document.getElementById('submit-form').classList.remove('hidden');
+        return;
+      }
+      
+      const hours = Math.floor(timeRemaining / 3600);
+      const minutes = Math.floor((timeRemaining % 3600) / 60);
+      const seconds = timeRemaining % 60;
+      
+      document.getElementById('timer-hours').textContent = hours.toString().padStart(2, '0');
+      document.getElementById('timer-minutes').textContent = minutes.toString().padStart(2, '0');
+      document.getElementById('timer-seconds').textContent = seconds.toString().padStart(2, '0');
+      
+      timeRemaining--;
+      setTimeout(updateTimer, 1000);
+    }
+    
+    updateTimer();
   }
 </script>

@@ -253,6 +253,7 @@ const routes = {
   
   // Post routes  
   'POST /api/posts/submit': handleSubmitPost,
+  'GET /api/posts/rate-limit-status': handleGetRateLimitStatus,
   'GET /api/posts/feed': handleGetFeed,
   'GET /api/posts/:id': handleGetPost,
   'PUT /api/posts/:id': handleEditPost,
@@ -538,6 +539,64 @@ async function handleSubmitPost(request: Request, env: Env): Promise<Response> {
   } catch (error) {
     console.error('Submit post error:', error);
     return new Response(JSON.stringify({ error: 'Failed to submit post' }), { 
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+}
+
+async function handleGetRateLimitStatus(request: Request, env: Env): Promise<Response> {
+  const user = await getCurrentUser(request, env);
+  
+  if (!user) {
+    return new Response(JSON.stringify({ error: 'Authentication required' }), { 
+      status: 401,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+
+  try {
+    // Find user's last post from database
+    const lastPost = await env.DB
+      .prepare('SELECT created_at FROM posts WHERE author_id = ? ORDER BY created_at DESC LIMIT 1')
+      .bind(user.id)
+      .first();
+
+    const now = Math.floor(Date.now() / 1000); // Current time in seconds
+    const rateLimitWindow = 24 * 60 * 60; // 24 hours in seconds
+
+    let canPost = true;
+    let nextPostAt = now; // Can post now
+    let timeRemaining = 0;
+
+    if (lastPost) {
+      const lastPostTime = lastPost.created_at;
+      const nextAllowedTime = lastPostTime + rateLimitWindow;
+      
+      if (now < nextAllowedTime) {
+        // Still within rate limit window
+        canPost = false;
+        nextPostAt = nextAllowedTime;
+        timeRemaining = nextAllowedTime - now;
+      }
+    }
+
+    return new Response(JSON.stringify({
+      can_post: canPost,
+      next_post_at: nextPostAt,
+      time_remaining: timeRemaining,
+      rate_limit: {
+        limit: 1,
+        window: rateLimitWindow,
+        window_hours: 24
+      }
+    }), {
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+  } catch (error) {
+    console.error('Rate limit status error:', error);
+    return new Response(JSON.stringify({ error: 'Failed to check rate limit status' }), { 
       status: 500,
       headers: { 'Content-Type': 'application/json' }
     });
