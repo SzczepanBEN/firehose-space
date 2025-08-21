@@ -156,6 +156,29 @@ your code here
         <label for="image-url" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           Image URL (optional)
         </label>
+        
+        <!-- Image Preview -->
+        <div id="image-preview-container" class="mb-3 hidden">
+          <div class="relative inline-block">
+            <img 
+              id="image-preview" 
+              src="" 
+              alt="Image preview" 
+              class="max-w-xs max-h-32 rounded-lg shadow-sm border border-gray-200 dark:border-gray-600"
+            >
+            <button 
+              type="button" 
+              id="remove-image"
+              class="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm transition-colors"
+            >
+              ×
+            </button>
+          </div>
+          <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            This image will be used as thumbnail and featured image
+          </p>
+        </div>
+        
         <input 
           type="url" 
           id="image-url" 
@@ -164,7 +187,7 @@ your code here
           placeholder="https://example.com/image.jpg"
         >
         <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Optional thumbnail image. For link posts, we'll try to auto-detect from the page.
+          Optional thumbnail image. Will be displayed as preview above and used throughout the site.
         </p>
       </div>
 
@@ -271,6 +294,40 @@ your code here
     contentInput.addEventListener('input', () => {
       const count = contentInput.value.length;
       document.getElementById('content-count').textContent = count;
+    });
+
+    // Image preview functionality
+    const imageUrlInput = document.getElementById('image-url');
+    const imagePreviewContainer = document.getElementById('image-preview-container');
+    const imagePreview = document.getElementById('image-preview');
+    const removeImageBtn = document.getElementById('remove-image');
+
+    imageUrlInput.addEventListener('input', () => {
+      const imageUrl = imageUrlInput.value.trim();
+      
+      if (imageUrl) {
+        // Show loading state
+        imagePreview.src = imageUrl;
+        imagePreviewContainer.classList.remove('hidden');
+        
+        // Handle image load errors
+        imagePreview.onerror = function() {
+          imagePreviewContainer.classList.add('hidden');
+          // Could add error message here if needed
+        };
+        
+        imagePreview.onload = function() {
+          // Image loaded successfully, ensure container is visible
+          imagePreviewContainer.classList.remove('hidden');
+        };
+      } else {
+        imagePreviewContainer.classList.add('hidden');
+      }
+    });
+
+    removeImageBtn.addEventListener('click', () => {
+      imageUrlInput.value = '';
+      imagePreviewContainer.classList.add('hidden');
     });
 
     // Form submission

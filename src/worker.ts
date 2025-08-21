@@ -447,11 +447,12 @@ async function handleSubmitPost(request: Request, env: Env): Promise<Response> {
     });
   }
 
-  // Check rate limit (1 post per day per user)
+  // Check rate limit (1 post per day per user) - but don't increment yet
   const rateLimitKey = `post_limit:${user.id}`;
-  const canPost = await checkRateLimit(env, rateLimitKey, 1, 24 * 60 * 60);
+  const currentCount = await env.CACHE.get(rateLimitKey);
+  const count = currentCount ? parseInt(currentCount) : 0;
   
-  if (!canPost) {
+  if (count >= 1) {
     return new Response(JSON.stringify({ error: 'Rate limit exceeded. One post per day.' }), { 
       status: 429,
       headers: { 'Content-Type': 'application/json' }
@@ -522,6 +523,9 @@ async function handleSubmitPost(request: Request, env: Env): Promise<Response> {
         .bind(postId, content)
         .run();
     }
+
+    // Only now increment rate limit counter after successful post creation
+    await env.CACHE.put(rateLimitKey, (count + 1).toString(), { expirationTtl: 24 * 60 * 60 });
 
     return new Response(JSON.stringify({ 
       success: true, 

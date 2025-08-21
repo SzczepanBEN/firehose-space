@@ -173,13 +173,12 @@ const canonicalUrl = `https://firehose.space/profile/edit`;
 
   async function loadCurrentUserProfile() {
     try {
-      // Check authentication
-      if (!window.isAuthenticated()) {
+      // Check authentication directly from localStorage
+      const authToken = localStorage.getItem('auth_token');
+      if (!authToken) {
         showError('Authentication Required', 'You must be logged in to edit your profile.');
         return;
       }
-
-      const authToken = window.getAuthToken();
       
       // Get current user data
       const response = await fetch('/api/auth/me', {
@@ -245,7 +244,9 @@ const canonicalUrl = `https://firehose.space/profile/edit`;
 
   async function loadFullUserData(userId) {
     try {
-      const authToken = window.getAuthToken();
+      const authToken = localStorage.getItem('auth_token');
+      if (!authToken) return;
+      
       const response = await fetch(`/api/users/${userId}`, {
         headers: {
           'Authorization': `Bearer ${authToken}`
@@ -342,7 +343,7 @@ const canonicalUrl = `https://firehose.space/profile/edit`;
         avatar_url: formData.get('avatar-url') || null
       };
 
-      const authToken = window.getAuthToken();
+      const authToken = localStorage.getItem('auth_token');
       if (!authToken) {
         throw new Error('Not authenticated');
       }

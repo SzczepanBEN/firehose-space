@@ -174,7 +174,8 @@ const canonicalUrl = `https://firehose.space/p/${slug}/edit`;
 
     try {
       // Check authentication first
-      if (!window.isAuthenticated()) {
+      const authToken = localStorage.getItem('auth_token');
+      if (!authToken) {
         showError('Authentication Required', 'You must be logged in to edit posts.');
         return;
       }
@@ -182,7 +183,7 @@ const canonicalUrl = `https://firehose.space/p/${slug}/edit`;
       // Get post data
       const response = await fetch(`/api/posts/${slug}`, {
         headers: {
-          'Authorization': `Bearer ${window.getAuthToken()}`
+          'Authorization': `Bearer ${authToken}`
         }
       });
 
@@ -351,7 +352,7 @@ const canonicalUrl = `https://firehose.space/p/${slug}/edit`;
         updateData.content = formData.get('content');
       }
 
-      const authToken = window.getAuthToken();
+      const authToken = localStorage.getItem('auth_token');
       if (!authToken) {
         throw new Error('Not authenticated');
       }
