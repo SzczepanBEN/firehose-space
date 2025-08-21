@@ -276,6 +276,9 @@ const routes = {
   // Promotion routes
   'POST /api/promotions': handleCreatePromotion,
   
+  // OpenGraph image generation
+  'GET /api/og/homepage': handleGenerateHomepageOGImage,
+  
   // Cron jobs
   'POST /api/cron/update-hotness': handleUpdateHotness,
   'POST /api/cron/update-leaderboard': handleUpdateLeaderboard,
@@ -1705,6 +1708,111 @@ async function handleUpdateHotness(request: Request, env: Env): Promise<Response
 async function handleUpdateLeaderboard(request: Request, env: Env): Promise<Response> {
   // TODO: Implement leaderboard calculation
   return new Response(JSON.stringify({ error: 'Not implemented yet' }), { status: 501 });
+}
+
+async function handleGenerateHomepageOGImage(request: Request, env: Env): Promise<Response> {
+  try {
+    // Create SVG with logo and tagline
+    const svg = `
+      <svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
+        <!-- Background gradient -->
+        <defs>
+          <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#0f0f23;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#1a1a3e;stop-opacity:1" />
+          </linearGradient>
+          <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#fb923c;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#f97316;stop-opacity:1" />
+          </linearGradient>
+        </defs>
+        
+        <!-- Background -->
+        <rect width="1200" height="630" fill="url(#bgGradient)"/>
+        
+        <!-- Subtle pattern overlay -->
+        <pattern id="dots" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+          <circle cx="20" cy="20" r="2" fill="rgba(255,255,255,0.1)"/>
+        </pattern>
+        <rect width="1200" height="630" fill="url(#dots)"/>
+        
+        <!-- Main content container -->
+        <g transform="translate(600, 315)">
+          <!-- Logo circle -->
+          <circle cx="0" cy="-80" r="50" fill="url(#logoGradient)" stroke="rgba(255,255,255,0.3)" stroke-width="3"/>
+          
+          <!-- Fire icon inside logo -->
+          <g transform="translate(0, -80)">
+            <path d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017 13s.879.5 2.5.5c0-1 .5-4 1.25-4.5.5 1 .786 1.293 1.371 1.879A2.99 2.99 0 0113 13a2.99 2.99 0 01-.879 2.121z" 
+                  fill="white" 
+                  transform="scale(2.5) translate(-10, -10)"/>
+          </g>
+          
+          <!-- Main title -->
+          <text x="0" y="20" 
+                text-anchor="middle" 
+                font-family="Inter, system-ui, sans-serif" 
+                font-size="72" 
+                font-weight="700" 
+                fill="white">
+            Firehose
+          </text>
+          
+          <!-- Subtitle/tagline -->
+          <text x="0" y="70" 
+                text-anchor="middle" 
+                font-family="Inter, system-ui, sans-serif" 
+                font-size="32" 
+                font-weight="400" 
+                fill="rgba(255,255,255,0.9)">
+            Open publishing platform
+          </text>
+          
+          <!-- Description -->
+          <text x="0" y="110" 
+                text-anchor="middle" 
+                font-family="Inter, system-ui, sans-serif" 
+                font-size="24" 
+                font-weight="300" 
+                fill="rgba(255,255,255,0.7)">
+            No gatekeeping, just pure content flow
+          </text>
+          
+          <!-- Website URL -->
+          <text x="0" y="160" 
+                text-anchor="middle" 
+                font-family="Inter, system-ui, sans-serif" 
+                font-size="20" 
+                font-weight="500" 
+                fill="rgba(251,146,60,0.9)">
+            firehose.space
+          </text>
+        </g>
+        
+        <!-- Decorative elements -->
+        <circle cx="150" cy="150" r="8" fill="rgba(251,146,60,0.6)"/>
+        <circle cx="1050" cy="480" r="12" fill="rgba(251,146,60,0.4)"/>
+        <circle cx="200" cy="500" r="6" fill="rgba(255,255,255,0.3)"/>
+        <circle cx="1000" cy="150" r="10" fill="rgba(255,255,255,0.2)"/>
+      </svg>
+    `;
+
+    // Return SVG as image
+    return new Response(svg, {
+      headers: {
+        'Content-Type': 'image/svg+xml',
+        'Cache-Control': 'public, max-age=86400', // Cache for 24 hours
+        'Access-Control-Allow-Origin': '*',
+      },
+    });
+
+  } catch (error) {
+    console.error('OG image generation error:', error);
+    return new Response('Failed to generate image', { 
+      status: 500,
+      headers: { 'Content-Type': 'text/plain' }
+    });
+  }
 }
 
 // Main Worker handler

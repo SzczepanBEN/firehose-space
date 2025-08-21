@@ -11,7 +11,7 @@ const { title, description = "Firehose.space - Open publishing platform for link
 
 const fullTitle = title === "Firehose" ? title : `${title} | Firehose`;
 const siteUrl = "https://firehose.space";
-const defaultOgImage = `${siteUrl}/og-image.png`;
+const defaultOgImage = title === "Firehose" ? `${siteUrl}/api/og/homepage` : `${siteUrl}/og-image.png`;
 ---
 
 <!DOCTYPE html>
